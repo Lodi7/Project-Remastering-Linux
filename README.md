@@ -1,47 +1,149 @@
 # Project Remastering LOS
-**Membangun lingkungan pengembangan khusus untuk software development**
+
+**Membangun lingkungan pengembangan khusus untuk software development dengan linux mint xfce version**
 
 ## Step 1 Jalankan pembaruan pertama kali setelah instalasi Linux untuk memastikan semua paket terbaru dan keamanan sistem sudah terpasang.
-```sudo apt update && sudo apt upgrade -y```
 
-## Step 2 install cubic 
-1. ```sudo apt-add-repository universe```
-2. ```sudo apt-add-repository ppa:cubic-wizard/release```
-3. ```sudo apt update```
-4. ```sudo apt install cubic```
+`sudo apt update && sudo apt upgrade -y`
+
+## Step 2 install cubic
+
+1. `sudo apt-add-repository universe`
+2. `sudo apt-add-repository ppa:cubic-wizard/release`
+3. `sudo apt update`
+4. `sudo apt install cubic`
 
 ## Step 3 Modifikasi parameter boot kernel
-1. ```sudo nano /etc/default/grub```
+
+1. `sudo nano /etc/default/grub`
 2. Cari GRUB_CMDLINE_LINUX_DEFAULT
 3. Edit isinya menjadi GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 panic=10 fsck.mode=auto fsck.repair=yes"
+   **Note** : Jika tidak menggunakan cubic dan langsung merubahnya di kernel lakukan `sudo update-grub` lalu `sudo reboot`
 
 ## Step 4 install aplikasi yang dibutuhkan
+
 ### Install python
-1. ```sudo apt install -y python3 python3-pip python3-venv```
-2. Cek apakah sudah terinstall dengan benar menggunakan
-   * ```python3 --version```
-   * ```pip3 --version```
+
+1. `sudo apt install -y python3 python3-pip python3-venv`
+   **Note** : Cek apakah sudah terinstall dengan benar menggunakan `python3 --version` dan `pip3 --version`
 
 ### Install GCC
-1. ```sudo apt install -y build-essential```
-2. Cek apakah sudah terinstall dengan benar menggunakan
-   * ```gcc --version```
-   * ```g++ --version```
-   * ```make --version```
+
+1. `sudo apt install -y build-essential`
+   **Note** : Cek apakah sudah terinstall dengan benar menggunakan `gcc --version`,`g++ --version`, dan `make --version`
 
 ### Install OpenJDK
-1. Cek versi Java yang tersedia ```apt search -jdk --names-only```
-2. Lalu install sesuai dengan versi yang di inginkan ```sudo apt install -y openjdk-xx-jdk```
-3. Cek apakah sudah terinstall dengan benar menggunakan
-   * ```java -version```
-   * ```javac -version```
+
+1. Cek versi Java yang tersedia `apt search -jdk --names-only`
+2. Lalu install sesuai dengan versi yang di inginkan `sudo apt install -y openjdk-xx-jdk`
+   **Note** : Cek apakah sudah terinstall dengan benar menggunakan `java -version` dan `javac -version`
 
 ### Install Node.Js
-1. Jika curl belum terinstall ```sudo apt-get install curl```
-2. Jika sudah ada langsung ```curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -```
-3. ```sudo apt-get install nodejs```
-4.  Cek apakah sudah terinstall dengan benar menggunakan
-   * ```node -v```
-   * ```npm -v```
 
+1. Jika curl belum terinstall `sudo apt-get install curl`
+2. Jika sudah ada langsung `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
+3. `sudo apt-get install nodejs`
+   **Note** : Cek apakah sudah terinstall dengan benar menggunakan `node -v` dan `npm -v`
 
+### Install Vscode
+
+#### Penginstallan aplikasi
+
+1. Lakukan `sudo apt update && sudo apt ugrade -y` jika belum
+2. Install dependensi yang diperlukan `sudo apt install curl gpg dirmngr software-properties-common apt-transport-https`
+3. Tambahkan repositori resmi VSCode Microsoft Impor kunci GPG Microsoft `curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/vscode.gpg > /dev/null`
+4. Tambahkan repositori Visual Studio Code `echo "deb [arch=amd64,arm64,armhf signed-by=/usr/share/keyrings/vscode.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null`
+5. Jalankan `sudo apt update` untuk memperbarui daftar paket
+6. Install Vscode `sudo apt install code`
+   **Note** : Cek apakah sudah terinstall dengan benar menggunakan `code ---version`
+
+#### Penginstallan extension
+
+1. siapkan file/package-nya yang berisikan nama publisher.nama-extension dengan format .txt yang ingin di install (digithub saya sudah ada dengan nama extension-vscode.txt)
+2. Install extensionnya `cat extension-vscode.txt | grep -v '^#' | xargs -L 1 code --install-extension`
+
+#### Pengaturan konfigurasi
+
+sebentar
+
+### Install Git
+
+1. `sudo apt install -y git gitk git-gui`
+2. Atur konfigurasi git
+   - `git config --system core.editor "code --wait"`
+   - `git config --system init.defaultBranch main`
+   - `git config --system pull.rebase false`
+     **Note** : Cek apakah sudah terinstall dengan benar menggunakan `git --version`
+
+### Install Docker
+
+1. `sudo apt update` jika belum pernah
+2. Instal paket prasyarat untuk memungkinkan apt menggunakan repositori melalui HTTPS `sudo apt install ca-certificates curl`
+3. Buat direktori untuk kunci GPG Docker `sudo install -m 0755 -d /etc/apt/keyrings`
+4. Tambahkan Docker's official GPG key `sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc` `sudo chmod a+r /etc/apt/keyrings/docker.asc`
+5. Tambahkan repositori nya ke Apt sources `echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
+6. Update repository nya `sudo apt update`
+7. Install Docker package-nya `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
+8. Jalankan Docker tanpa sudo (opsional)
+   - `sudo groupadd docker`
+   - `usermod -aG docker $USER`
+     **Note** : Cek apakah sudah terinstall dengan benar menggunakan `docker --version` dan `docker composer version`
+
+## Step 5 Hapus aplikasi bawaan (bloatware) yang tidak digunakan atau tidak relevan
+
+1. `sudo apt update` (opsional jika sudah pernah tidak usah)
+2. Meghapus paket dan semua konfigurasi nya `sudo apt purge -y nama-aplikasi`
+3. Menghapus library yang tidak terpakai `sudo apt autoremove -y`
+
+## Step 6 Merubah tampilan atau tema
+
+### Mengekstrak dan Memindahkan tema ke folder themes
+
+1. Download tema yang ingin digunakan bisa di pling atau git clone
+2. ekstrak tema yang sudah di download
+   - zip gunakan `unzip nama-theme.zip -d nama-theme`
+   - tar.gz gunakan `tar -xvf nama-theme.tar.gz`
+3. Pindahkan ke folder global
+
+- Untuk GTK/Windows Manager Theme gunakan `sudo mv nama-theme /usr/share/themes/`
+- Untuk Icons dan Cursor gunaka `sudo mv nama-theme /usr/share/icons`
+- Untuk Wallpaper atau Background gunakan `sudo mv nama-bg /usr/share/backgrounds`
+  **Note** : Pastikan sebelumnya kalian sudah di folder tempat tema yang kalian download dengan `cd ~/path-folder-tema`
+
+### Mengatur Xfce untuk pakai tema
+
+- GTK Theme
+  `xfconf-query -c xsettings -p /Net/ThemeName -s "nama-theme"`
+- Windows Manager Theme
+  `xfconf-query -c xfwm4 -p /general/theme -s "nama-theme"`
+- Icons Theme (Jika Ada)
+  `xfconf-query -c xsettings -p /Net/IconThemeName -s "nama-theme"`
+- Cursor Theme (Jika Ada)
+  `xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "nama-theme"`
+  `xfconf-query -c xsettings -p /Gtk/CursorSize -s 24`
+- Wallpaper
+  `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/name-bg.jpg"`
+  **Note** : Jika sudah lakukan `xfdesktop --reload` dan `xfce4-panel -r` agar tema tadi diterapkan
+  **Tambahan** : Jika tidak tau nama tema yang akan digunakan bisa lakukan `ls /usr/share/path-nya/`
+
+## Step 7 Merubah tampilan splash screen dan logo animasi booting
+
+### Splash Screen booting
+
+1. Siapkan plymouth yang akan digunakan
+2. Ekstra terlebih dahulu
+   - zip gunakan `unzip nama-plymouth.zip -d nama-plymouth`
+   - tar.gz gunakan `tar -xvf nama-plymouth.tar.gz`
+3. Pindahkan ke folder plymouth `sudo mv nama-plymouth /usr/share/plymouth/themes/`
+4. Cek isi folder (opsional) `ls /usr/share/plymouth/themes/nama-plymouth`
+5. Set tema plymouth baru dengan `sudo plymouth-set-default-theme nama-plymouth -R`
+   **Note** : Pastikan sebelumnya kalian sudah di folder tempat plymouth yang kalian siapkan dengan `cd ~/path-folder-plymouth `
+   **Tambahan** : Jika ingin tes tema plymouth tanpa reboot bisa lakukan `sudo plymouthd` `sudo plymouthd --show-splash` `sudo pkill plymouthd`
+
+### Login screen logo
+
+1. Siapkan logo yang ingin digunakan
+2. Backup logo lama (opsional) `sudo cp /usr/share/plymouth/nama-logo-distro.png{,.bak}`
+3. Lalu ganti dengan logo yang disiapkan `sudo cp ~/pathfolder/nama-logo.png /usr/share/plymouth/nama-logo-distro.png`
+
+## Step 8 Menambahkan Skrip Otomatis
