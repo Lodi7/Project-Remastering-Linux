@@ -145,6 +145,4 @@ sebentar
 2. Backup logo lama (opsional) `sudo cp /usr/share/plymouth/nama-logo-distro.png{,.bak}`
 3. Lalu ganti dengan logo yang disiapkan `sudo cp ~/pathfolder/nama-logo.png /usr/share/plymouth/nama-logo-distro.png`
 
-## Step 8 Skrip Otomatis
-
 ## Step 8 Menambahkan Skrip Otomatis
