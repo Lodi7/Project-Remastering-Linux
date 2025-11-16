@@ -80,13 +80,15 @@ sebentar
 1. `sudo apt update` jika belum pernah
 2. Instal paket prasyarat untuk memungkinkan apt menggunakan repositori melalui HTTPS `sudo apt install ca-certificates curl`
 3. Buat direktori untuk kunci GPG Docker `sudo install -m 0755 -d /etc/apt/keyrings`
-4. Tambahkan Docker's official GPG key `sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc` `sudo chmod a+r /etc/apt/keyrings/docker.asc`
-5. Tambahkan repositori nya ke Apt sources `echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
-6. Update repository nya `sudo apt update`
-7. Install Docker package-nya `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
-8. Jalankan Docker tanpa sudo (opsional)
+4. Tambahkan Docker's official GPG key
+   - `sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc`
+   - `sudo chmod a+r /etc/apt/keyrings/docker.asc`
+6. Tambahkan repositori nya ke Apt sources `echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
+7. Update repository nya `sudo apt update`
+8. Install Docker package-nya `sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin`
+9. Jalankan Docker tanpa sudo (opsional)
    - `sudo groupadd docker`
-   - `usermod -aG docker $USER`
+   - `usermod -aG docker $USER` (dicubic pakai skrip otomatis)
 - **Note** : Cek apakah sudah terinstall dengan benar menggunakan `docker --version` dan `docker composer version`
 
 ## Step 5 Hapus aplikasi bawaan (bloatware) yang tidak digunakan atau tidak relevan
@@ -109,19 +111,40 @@ sebentar
   - Untuk Wallpaper atau Background gunakan `sudo mv nama-bg /usr/share/backgrounds`
 - **Note** : Pastikan sebelumnya kalian sudah di folder tempat tema yang kalian download dengan `cd ~/path-folder-tema`
 
+### Mengatur hak akses
+#### GTK Theme
+- `sudo chmod -R 755 /usr/share/themes/nama-gtk-theme`
+- `sudo chown -R root:root /usr/share/themes/nama-gtk-theme`
+
+# Window Manager Theme
+- `sudo chmod -R 755 /usr/share/themes/nama-wm-theme`
+- `sudo chown -R root:root /usr/share/themes/nama-wm-theme`
+
+# Icon Theme
+- `sudo chmod -R 755 /usr/share/icons/nama-icon-theme`
+- `sudo chown -R root:root /usr/share/icons/nama-icon-theme`
+
+# Cursor Theme
+- `sudo chmod -R 755 /usr/share/icons/nama-cursor-theme`
+- `sudo chown -R root:root /usr/share/icons/nama-cursor-theme`
+
+# Wallpaper
+- `sudo chmod 644 /usr/share/backgrounds/nama-wallpaper.jpg`
+- `sudo chown root:root /usr/share/backgrounds/nama-wallpaper.jpg`
+
 ### Mengatur Xfce untuk pakai tema
 
 #### GTK Theme
-  `xfconf-query -c xsettings -p /Net/ThemeName -s "nama-theme"`
+  `xfconf-query -c xsettings -p /Net/ThemeName -s "nama-gtk-theme"`
 #### Windows Manager Theme
-  `xfconf-query -c xfwm4 -p /general/theme -s "nama-theme"`
+  `xfconf-query -c xfwm4 -p /general/theme -s "nama-wm-theme"`
 #### Icons Theme (Jika Ada)
-  `xfconf-query -c xsettings -p /Net/IconThemeName -s "nama-theme"`
+  `xfconf-query -c xsettings -p /Net/IconThemeName -s "nama-icons-theme"`
 #### Cursor Theme (Jika Ada)
-  ```xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "nama-theme"```
+  ```xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "nama-cursor-theme"```
   ```xfconf-query -c xsettings -p /Gtk/CursorSize -s 24```
 #### Wallpaper
-  `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/name-bg.jpg"`
+  `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/nama-wallpaper.jpg"`
 - **Note** : Jika sudah lakukan `xfdesktop --reload` dan `xfce4-panel -r` agar tema tadi diterapkan
 - **Tambahan** : Jika tidak tau nama tema yang akan digunakan bisa lakukan `ls /usr/share/path-nya/`
 
@@ -146,3 +169,20 @@ sebentar
 3. Lalu ganti dengan logo yang disiapkan `sudo cp ~/pathfolder/nama-logo.png /usr/share/plymouth/nama-logo-distro.png`
 
 ## Step 8 Menambahkan Skrip Otomatis
+1. Siapkah skrip otomatis yang ingin digunakan (direpo firstboot.sh)
+2. pindahkan skrip ke `mv /path/lokasi/firstboot.sh /usr/local/bin/nama-skrip.sh`
+3. Berikan akses `chmod +x /usr/local/bin/nama-skrip.sh`
+4. Buat systemd service untuk firstboot `nano /etc/systemd/system/nama-skrip.service`
+5. Lalu isi dengan
+   ```[Unit]
+Description=First Boot Configuration LOS
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/nama-file.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target```
+6. Setelah disimpan atur agar service jalan `systemctl enable nama-file.service`
