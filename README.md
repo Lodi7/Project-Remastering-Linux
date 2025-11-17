@@ -34,7 +34,7 @@
 
 ### Install OpenJDK
 
-1. Cek versi Java yang tersedia `apt search -jdk --names-only`
+1. Cek versi Java yang tersedia `apt search openjdk-`
 2. Lalu install sesuai dengan versi yang di inginkan `sudo apt install -y openjdk-xx-jdk`
 - **Note** : Cek apakah sudah terinstall dengan benar menggunakan `java -version` dan `javac -version`
 
