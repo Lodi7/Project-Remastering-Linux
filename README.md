@@ -109,7 +109,7 @@ sebentar
   - Untuk GTK/Windows Manager Theme gunakan `sudo mv nama-theme /usr/share/themes/`
   - Untuk Icons dan Cursor gunaka `sudo mv nama-theme /usr/share/icons`
   - Untuk Wallpaper atau Background gunakan `sudo mv nama-bg /usr/share/backgrounds`
-- **Note** : Pastikan sebelumnya kalian sudah di folder tempat tema yang kalian download dengan `cd ~/path-folder-tema`
+- **Note** : Pastikan sebelumnya kalian sudah di folder tempat tema yang kalian download dengan `cd ~/path-folder-tema` atau jika tidak menggunakan cubic **drag** & **drop** ke cd /usr/share/pathnya
 
 ### Mengatur hak akses
 #### GTK Theme
@@ -174,15 +174,15 @@ sebentar
 3. Berikan akses `chmod +x /usr/local/bin/nama-skrip.sh`
 4. Buat systemd service untuk firstboot `nano /etc/systemd/system/nama-skrip.service`
 5. Lalu isi dengan
-   ```[Unit]
+- `[Unit]
 Description=First Boot Configuration LOS
-After=network.target
+After=network.target`
 
-[Service]
+- `[Service]
 Type=oneshot
 ExecStart=/usr/local/bin/nama-file.sh
-RemainAfterExit=yes
+RemainAfterExit=yes`
 
-[Install]
-WantedBy=multi-user.target```
+- `[Install]
+WantedBy=multi-user.target`
 6. Setelah disimpan atur agar service jalan `systemctl enable nama-file.service`
