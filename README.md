@@ -4,11 +4,9 @@
 
 ## Step 1 Jalankan pembaruan pertama kali setelah instalasi Linux untuk memastikan semua paket terbaru dan keamanan sistem sudah terpasang.
 
-```bash 
-sudo apt update && sudo apt upgrade -y
+`sudo apt update && sudo apt upgrade -y`
 
-
-# Step 2 install cubic
+## Step 2 install cubic
 
 1. `sudo apt-add-repository universe`
 2. `sudo apt-add-repository ppa:cubic-wizard/release`
