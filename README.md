@@ -11,7 +11,7 @@
 1. `sudo apt-add-repository universe`
 2. `sudo apt-add-repository ppa:cubic-wizard/release`
 3. `sudo apt update`
-4. `sudo apt install cubic`
+4. `sudo apt install cubic -y`
 
 ## Step 3 Modifikasi parameter boot kernel
 
