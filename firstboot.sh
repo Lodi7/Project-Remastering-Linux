@@ -1,6 +1,5 @@
 #!/bin/bash
 # Skrip First Boot LOS: Git + Docker + Workspace + Shortcut + Banner ASCII + Pesan Ramah
-
 # ===== Fungsi warna =====
 HIJAU='\033[0;32m'
 SIAU='\033[0;36m'
