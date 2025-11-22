@@ -211,7 +211,7 @@ Ada 2 cara
 4. Cek isi folder (opsional) `ls /usr/share/plymouth/themes/nama-plymouth`
 5. Set tema plymouth baru dengan ` sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/nama-folder/nama-file.plymouth 100`
 6. `sudo update-alternatives --config default.plymouth` pilih nomor plymouth yang mau digunakan
-7. `sudo update-initramfs -u`
+7. `sudo update-initramfs -u -k all`
 - **Note** : Pastikan sebelumnya kalian sudah di folder tempat plymouth yang kalian siapkan dengan `cd ~/path-folder-plymouth `  atau jika di cubic **drag** & **drop** ke `cd /usr/share/plymouth/themes/`
 - **Tambahan** : Jika ingin tes tema plymouth tanpa reboot bisa lakukan `sudo plymouthd` `sudo plymouthd --show-splash` `sudo pkill plymouthd`
 
