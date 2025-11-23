@@ -161,11 +161,18 @@ Jadi satu dengan skrip otomatis
       - `<property name="theme" type="string" value="nama-theme"/>`
    - Untuk wallpaper `xfce4-desktop.xml`  lalu cari ini
      - `value = /usr/share/backgrounds/nama-bg.jpg` atau `value = /usr/share/xfce4/backdrops/nama-bg.jpg`
+3. Jika sudah jangan lupa `sudo chown -R root:root /etc/skel/.config/xfce4` dan `sudo chmod -R 755 /etc/skel/.config/xfce4`
 - **Note** : Jika sudah lakukan `xfdesktop --reload` dan `xfce4-panel -r` agar tema tadi diterapkan
 - **Tambahan** : Jika tidak tau nama tema yang akan digunakan bisa lakukan `ls /usr/share/path-nya/` lalu jika waktu di cubic tidak bisa xfconf lakukan
    - `dbus-launch`
    - `xfce4-session &`
    - `sleep 2`
+ 
+### Merubah posisi login window
+1. `sudo nano /etc/lightdm/slick-greeter.conf/`
+2. cari layout dan ganti ke center
+3. kalau belum di chroot `sudo systemctl restart lightdm`
+
 ### Merubah Tema grub (opsional)
 Ada 2 cara
 #### Cara 1
