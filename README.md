@@ -136,48 +136,36 @@ Jadi satu dengan skrip otomatis
 ### Mengatur Xfce untuk pakai tema
 ### Cara 1 (hanya user lokal saja)
 #### GTK Theme
-  `xfconf-query -c xsettings -p /Net/ThemeName -s "nama-gtk-theme"`
+  `xfconf-query -c xsettings -p /Net/ThemeName -s "nama-gtk-theme" --create`
 #### Windows Manager Theme
-  `xfconf-query -c xfwm4 -p /general/theme -s "nama-wm-theme"`
+  `xfconf-query -c xfwm4 -p /general/theme -s "nama-wm-theme" --create`
 #### Icons Theme (Jika Ada)
-  `xfconf-query -c xsettings -p /Net/IconThemeName -s "nama-icons-theme"`
+  `xfconf-query -c xsettings -p /Net/IconThemeName -s "nama-icons-theme" --create`
 #### Cursor Theme (Jika Ada)
-  ```xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "nama-cursor-theme"```
+  ```xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "nama-cursor-theme" --create```
   ```xfconf-query -c xsettings -p /Gtk/CursorSize -s 24```
 #### Wallpaper
-  `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/nama-wallpaper.jpg"`
+  `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/nama-wallpaper.jpg" --create`
 
 ### Cara 2 (global)
-#### Edit GTK/Icons/Cursor
-1. `sudo nano etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml`
-2. cari <property> dan edit
-   - `<property name="Net/ThemeName" type="string" value="nama-gtk-theme"/>`
-   - `<property name="Net/IconThemeName" type="string" value="nama-icons-theme"/>`
-   - `<property name="Gtk/CursorThemeName" type="string" value="nama-cursor-theme"/>`
-   - `<property name="Gtk/CursorSize" type="int" value="24"/>`
-3. lakukan
-   - `sudo mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-   - `sudo cp /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-#### Edit WM Theme
-1. `sudo nano etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml`
-2. cari <property>
-   - `<property name="theme" type="string" value="nama-theme"/>`
-3. lakukan
-   - `sudo mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-   - `sudo cp /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-#### Edit wallpaper 
-1. `sudo nano etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml`
-2. cari <property>
-   - `value = /usr/share/backgrounds/nama-bg.jpg` atau `value = /usr/share/xfce4/backdrops/nama-bg.jpg`
-3. lakukan
-   - `sudo mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-   - `sudo cp /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-
+1. setelah cara 1 langsung copy ke /etc/skel
+   - `sudo mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/` (kalau belum ada)
+   - `sudo cp -r ~/.config/xfce4/xfconf/xfce-perchannel-xml/*.xml /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
+2. Kalau maud edit lagi tinggal `sudo nano /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/nama-setting.xml` 
+   - Untuk gtk,icons,cursor ada di `xsettings.xml` lalu cari ini
+      - `<property name="Net/ThemeName" type="string" value="nama-gtk-theme"/>`
+      - `<property name="Net/IconThemeName" type="string" value="nama-icons-theme"/>`
+      - `<property name="Gtk/CursorThemeName" type="string" value="nama-cursor-theme"/>`
+      - `<property name="Gtk/CursorSize" type="int" value="24"/>`
+   - Untuk WM `xfwm4.xml` lalu cari ini
+      - `<property name="theme" type="string" value="nama-theme"/>`
+   - Untuk wallpaper `xfce4-desktop.xml`  lalu cari ini
+     - `value = /usr/share/backgrounds/nama-bg.jpg` atau `value = /usr/share/xfce4/backdrops/nama-bg.jpg`
 - **Note** : Jika sudah lakukan `xfdesktop --reload` dan `xfce4-panel -r` agar tema tadi diterapkan
-- **Tambahan** : Jika tidak tau nama tema yang akan digunakan bisa lakukan `ls /usr/share/path-nya/` jika ingin melakukan perubahan semuanya bisa langsung
-   - `sudo mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-   - `sudo cp /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/*.xml /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/`
-
+- **Tambahan** : Jika tidak tau nama tema yang akan digunakan bisa lakukan `ls /usr/share/path-nya/` lalu jika waktu di cubic tidak bisa xfconf lakukan
+   - `dbus-launch`
+   - `xfce4-session &`
+   - `sleep 2`
 ### Merubah Tema grub (opsional)
 Ada 2 cara
 #### Cara 1
