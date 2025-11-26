@@ -102,7 +102,7 @@ Jadi satu dengan skrip otomatis
 
 1. `sudo apt update` (opsional jika sudah pernah tidak usah)
 2. Meghapus paket dan semua konfigurasi nya `sudo apt remove --purge -y hypnotix, thingy, libreoffice-base-core
-,libreoffice-startcenter, libreoffice-draw, fingwit webapp-manager firefox`
+,libreoffice-common, libreoffice-draw, fingwit, webapp-manager, firefox`
 3. Menghapus library yang tidak terpakai `sudo apt autoremove -y`
 
 ## Step 6 Merubah tampilan atau tema
