@@ -92,10 +92,16 @@ Jadi satu dengan skrip otomatis
    - `usermod -aG docker $USER` (dicubic pakai skrip otomatis)
 - **Note** : Cek apakah sudah terinstall dengan benar menggunakan `docker --version` dan `docker composer version`
 
+### Install Brave
+1. `sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg`
+2. `sudo curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources https://brave-browser-apt-release.s3.brave.com/brave-browser.sources`
+3. `sudo apt update`
+4. `sudo apt install brave-browser`
+
 ## Step 5 Hapus aplikasi bawaan (bloatware) yang tidak digunakan atau tidak relevan
 
 1. `sudo apt update` (opsional jika sudah pernah tidak usah)
-2. Meghapus paket dan semua konfigurasi nya `sudo apt purge -y nama-aplikasi`
+2. Meghapus paket dan semua konfigurasi nya `sudo apt purge -y hypnotix.desktop thingy.desktop libreoffice-startcenter.desktop libreoffice-calc.desktop libreoffice-draw.desktop libreoffice-impress.desktop libreoffice-writer.desktop fingwit.desktop webapp-manager.desktop firefox.desktop`
 3. Menghapus library yang tidak terpakai `sudo apt autoremove -y`
 
 ## Step 6 Merubah tampilan atau tema
