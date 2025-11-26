@@ -61,7 +61,8 @@
 #### Penginstallan extension
 
 1. siapkan file/package-nya yang berisikan nama publisher.nama-extension dengan format .txt yang ingin di install (digithub saya sudah ada dengan nama extension-vscode.txt)
-2. Install extensionnya `cat extension-vscode.txt | grep -v '^#' | xargs -L 1 code --install-extension`
+2. Install extensionnya `cat extension-vscode.txt | grep -v '^#' | xargs -L 1 code --install-extension`, gunakan ini jika di cubic `cat extension-vscode.txt | grep -v '^#' | sed "s/[^a-zA-Z0-9.-]//g" | xargs -L 1 sudo code --no-sandbox --user-data-dir=/tmp/vscode-data --install-extension
+`
 
 #### Pengaturan konfigurasi
 
