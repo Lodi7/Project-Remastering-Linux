@@ -242,4 +242,16 @@ RemainAfterExit=yes`
 
 - `[Install]
 WantedBy=multi-user.target`
+```[Unit]
+Description=First Boot Configuration
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/firstboot.sh
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
+```
 6. Setelah disimpan atur agar service jalan `systemctl enable nama-file.service`
