@@ -242,7 +242,8 @@ RemainAfterExit=yes`
 
 - `[Install]
 WantedBy=multi-user.target`
-```[Unit]
+```
+[Unit]
 Description=First Boot Configuration
 After=network.target
 
