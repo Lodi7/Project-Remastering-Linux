@@ -153,7 +153,8 @@ Jadi satu dengan skrip otomatis
   ```xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "nama-cursor-theme" --create```
   ```xfconf-query -c xsettings -p /Gtk/CursorSize -s 24```
 #### Wallpaper
-  `xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/nama-wallpaper.jpg" --create`
+`xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/workspace0/last-image -s "/usr/share/backgrounds/anime.jpg" --create --type string`
+
 
 ### Cara 2 (global)
 1. setelah cara 1 langsung copy ke /etc/skel
