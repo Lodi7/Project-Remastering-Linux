@@ -61,8 +61,14 @@
 #### Penginstallan extension
 
 1. siapkan file/package-nya yang berisikan nama publisher.nama-extension dengan format .txt yang ingin di install (digithub saya sudah ada dengan nama extension-vscode.txt)
-2. Install extensionnya `cat extension-vscode.txt | grep -v '^#' | xargs -L 1 code --install-extension`, gunakan ini jika di cubic `cat extension-vscode.txt | grep -v '^#' | sed "s/[^a-zA-Z0-9.-]//g" | xargs -L 1 sudo code --no-sandbox --user-data-dir=/tmp/vscode-data --install-extension
-`
+2. Install extensionnya `cat extension-vscode.txt | grep -v '^#' | xargs -L 1 code --install-extension`, gunakan ini jika di cubic Install extension ke temporary directory dulu
+`cat extension-vscode.txt | grep -v '^#' | sed "s/[^a-zA-Z0-9.-]//g" | xargs -L 1 sudo code --no-sandbox --user-data-dir=/tmp/vscode-data --install-extension`
+3. Buat direktori di /etc/skel
+`sudo mkdir -p /etc/skel/.vscode/extensions/`
+4. Copy extension dari temp ke /etc/skel
+`sudo mv /tmp/vscode-data/User/extensions/* /etc/skel/.vscode/extensions/`
+5. Set permission
+`sudo chmod -R 755 /etc/skel/.vscode/`
 
 #### Pengaturan konfigurasi
 
@@ -179,8 +185,21 @@ Jadi satu dengan skrip otomatis
  
 ### Merubah posisi login window
 1. `sudo nano /etc/lightdm/slick-greeter.conf/`
-2. cari layout dan ganti ke center
+2. isi dengan folder lightdm yang telah disiapkan 
 3. kalau belum di chroot `sudo systemctl restart lightdm`
+4. Jika gagal isi semua /etc/lightdm dengan folder yang telah disiapkan
+
+### Mengganti icon start menu
+1. siapkan logo icon nya yaitu LOS.png
+2. pindahkan dengan `mv /lokasi/path/LOS.png /usr/share/icons/
+3. berikan permission `sudo chmod +x /usr/share/icons/LOS.png`
+4. Jangan lupa ganti pathnya di /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce-panel.xml
+
+### Menyiapkan plank
+1. buat folder baru `mkdir /etc/skel/.config/plank/dock1/launchers/`
+2. isi dengan folder plank yang sudah disiapkan
+3. buat autostart nya `sudo nano /etc/skel/.config/autostart/plank.desktop`
+4. isi dengan file yang sudah disiapkan 
 
 ### Merubah Tema grub (opsional)
 Ada 2 cara
@@ -229,30 +248,8 @@ Ada 2 cara
 1. Siapkah skrip otomatis yang ingin digunakan (direpo firstboot.sh)
 2. pindahkan skrip ke `mv /path/lokasi/firstboot.sh /usr/local/bin/nama-skrip.sh`
 3. Berikan akses `chmod +x /usr/local/bin/nama-skrip.sh`
-4. Buat systemd service untuk firstboot `nano /etc/systemd/system/nama-skrip.service`
-5. Lalu isi dengan
-- `[Unit]
-Description=First Boot Configuration LOS
-After=network.target`
-
-- `[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/nama-file.sh
-RemainAfterExit=yes`
-
-- `[Install]
-WantedBy=multi-user.target`
-```
-[Unit]
-Description=First Boot Configuration
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/firstboot.sh
-Type=oneshot
-RemainAfterExit=true
-
-[Install]
-WantedBy=multi-user.target
-```
-6. Setelah disimpan atur agar service jalan `systemctl enable nama-file.service`
+4. Buat/edit sudoers `sudo visudo -f /etc/sudoers.d/auto`
+5. Isi dengan `ALL ALL=(ALL) NOPASSWD: /usr/local/bin/firstboot.sh`
+6. Berikan permission `sudo chmod 440 /etc/sudoers.d/auto`
+7. buat autostart desktop `sudo nano /etc/skel/.config/autostart/firstboot.desktop`
+8. isi dengan yang file yang telah disiapkan di autostart folder
