@@ -1,9 +1,9 @@
 #!/bin/bash
-# Skrip First Boot LOS: Git + Docker + Workspace + Shortcut + Banner ASCII + Pesan Ramah
+
 # ===== Fungsi warna =====
 HIJAU='\033[0;32m'
 SIAU='\033[0;36m'
-BIRU_CERAH='\033[1;34m'  # Mengganti magenta menjadi biru cerah
+BIRU_CERAH='\033[1;34m'  
 NC='\033[0m'
 
 # ===== Banner ASCII LOS =====
@@ -25,8 +25,8 @@ sleep 1
 
 # ===== Langkah 1: Update & Upgrade Sistem =====
 echo -e "${SIAU}[1/5] Mohon tunggu sebentar, memperbarui dan meng-upgrade sistem...${NC}"
-apt update && apt -y upgrade
-apt -y autoremove && apt -y autoclean
+apt-get update && apt-get -y upgrade
+apt-get -y autoremove && apt-get -y autoclean
 echo -e "${HIJAU}[OK] Sistem LOS telah diperbarui!${NC}"
 sleep 0.5
 
