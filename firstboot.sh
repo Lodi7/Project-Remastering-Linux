@@ -3,13 +3,12 @@
 # ===== Fungsi warna =====
 HIJAU='\033[0;32m'
 SIAU='\033[0;36m'
-MAGENTA='\033[0;35m'
+BIRU_CERAH='\033[1;34m'  # Mengganti magenta menjadi biru cerah
 NC='\033[0m'
 
 # ===== Banner ASCII LOS =====
-# ===== Banner ASCII LOS =====
 clear
-echo -e "${MAGENTA}"
+echo -e "${BIRU_CERAH}"
 echo "░▒▓█▓▒░      ░▒▓██████▓▒░ ░▒▓███████▓▒░ ";
 echo "░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ";
 echo "░▒▓█▓▒░     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ";
@@ -113,27 +112,23 @@ EOF
 echo -e "${HIJAU}[OK] VS Code settings siap digunakan!${NC}"
 sleep 0.5
 
-# ===== Langkah 5: Buat Workspace & Shortcut =====
-echo -e "${SIAU}[5/6] Membuat folder workspace dan shortcut...${NC}"
+# ===== Langkah 5: Buat Workspace =====
+echo -e "${SIAU}[5/6] Membuat folder workspace...${NC}"
 sudo -u $TARGET_USER mkdir -p /home/$TARGET_USER/Workspace
 sudo -u $TARGET_USER mkdir -p /home/$TARGET_USER/Projects
-if [ -f /usr/bin/code ]; then
-    sudo -u $TARGET_USER ln -sf /usr/bin/code /home/$TARGET_USER/Desktop/VSCode
-fi
-echo -e "${HIJAU}[OK] Folder workspace & shortcut siap digunakan!${NC}"
+echo -e "${HIJAU}[OK] Folder workspace siap digunakan!${NC}"
 sleep 0.5
 
 # ===== Langkah 6: Finish & Cleanup =====
 echo -e "${SIAU}[6/6] Menyelesaikan konfigurasi...${NC}"
-if [ -f /etc/systemd/system/firstboot.service ]; then
-    systemctl disable firstboot.service
-    rm -f /etc/systemd/system/firstboot.service
+if [ -f /home/$TARGET_USER/.config/autostart/firstboot.desktop ]; then
+    rm -f /home/$TARGET_USER/.config/autostart/firstboot.desktop
 fi
 echo -e "${HIJAU}[OK] First boot setup LOS selesai!${NC}"
 sleep 0.5
 
 # ===== Banner Selesai =====
-echo -e "${MAGENTA}"
+echo -e "${BIRU_CERAH}"
 echo "==========================================================="
 echo "                 First boot LOS selesai!"
 echo " Silakan logout/login atau restart agar grup Docker aktif."
