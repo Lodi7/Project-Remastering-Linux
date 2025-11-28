@@ -51,8 +51,32 @@ usermod -aG docker "$TARGET_USER"
 echo -e "${HIJAU}[OK] User '$TARGET_USER' berhasil ditambahkan ke grup Docker!${NC}"
 sleep 0.5
 
-# ===== Langkah 4: Buat folder VS Code dan settings.json =====
-echo -e "${SIAU}[4/6] Membuat VS Code User settings...${NC}"
+# ===== Langkah 4: Tambahkan Konfigurasi Plank =====
+echo -e "${SIAU}[4/5] Mengatur konfigurasi Plank dock...${NC}"
+
+# Set alignment
+dconf write /net/launchpad/plank/docks/dock1/alignment "'center'"
+
+# Set hide mode
+dconf write /net/launchpad/plank/docks/dock1/hide-mode "'intelligent'"
+
+# Set position
+dconf write /net/launchpad/plank/docks/dock1/position "'bottom'"
+
+# Set theme
+dconf write /net/launchpad/plank/docks/dock1/theme "'Default'"
+
+# Set zoom enabled
+dconf write /net/launchpad/plank/docks/dock1/zoom-enabled true
+
+# Set zoom percent
+dconf write /net/launchpad/plank/docks/dock1/zoom-percent 130
+
+echo -e "${HIJAU}[OK] Konfigurasi Plank dock telah diterapkan!${NC}"
+sleep 0.5
+
+# ===== Langkah 5: Buat folder VS Code dan settings.json =====
+echo -e "${SIAU}[5/6] Membuat VS Code User settings...${NC}"
 VSCODE_DIR="/home/$TARGET_USER/.config/Code/User"
 sudo -u $TARGET_USER mkdir -p "$VSCODE_DIR"
 sudo -u $TARGET_USER tee "$VSCODE_DIR/settings.json" > /dev/null <<'EOF'
@@ -112,15 +136,15 @@ EOF
 echo -e "${HIJAU}[OK] VS Code settings siap digunakan!${NC}"
 sleep 0.5
 
-# ===== Langkah 5: Buat Workspace =====
-echo -e "${SIAU}[5/6] Membuat folder workspace...${NC}"
+# ===== Langkah 6: Buat Workspace =====
+echo -e "${SIAU}[6/6] Membuat folder workspace...${NC}"
 sudo -u $TARGET_USER mkdir -p /home/$TARGET_USER/Workspace
 sudo -u $TARGET_USER mkdir -p /home/$TARGET_USER/Projects
 echo -e "${HIJAU}[OK] Folder workspace siap digunakan!${NC}"
 sleep 0.5
 
-# ===== Langkah 6: Finish & Cleanup =====
-echo -e "${SIAU}[6/6] Menyelesaikan konfigurasi...${NC}"
+# ===== Langkah 7: Finish & Cleanup =====
+echo -e "${SIAU}[7/7] Menyelesaikan konfigurasi...${NC}"
 if [ -f /home/$TARGET_USER/.config/autostart/firstboot.desktop ]; then
     rm -f /home/$TARGET_USER/.config/autostart/firstboot.desktop
 fi
