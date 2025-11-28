@@ -199,7 +199,10 @@ Jadi satu dengan skrip otomatis
 1. buat folder baru `mkdir /etc/skel/.config/plank/dock1/launchers/`
 2. isi dengan folder plank yang sudah disiapkan
 3. buat autostart nya `sudo nano /etc/skel/.config/autostart/plank.desktop`
-4. isi dengan file yang sudah disiapkan 
+4. isi dengan file yang sudah disiapkan
+
+### Menghapus welcome mint
+1. hapus file autostart nya `rm -r /etc/xdg/autostart/mintwelcome.desktop`
 
 ### Merubah Tema grub (opsional)
 Ada 2 cara
