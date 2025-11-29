@@ -66,7 +66,7 @@
 3. Buat direktori di /etc/skel
 `sudo mkdir -p /etc/skel/.vscode/extensions/`
 4. Copy extension dari temp ke /etc/skel
-`sudo mv /tmp/vscode-data/User/extensions/* /etc/skel/.vscode/extensions/`
+`sudo mv /root/.vscode/extensions/* /etc/skel/.vscode/extensions/`
 5. Set permission
 `sudo chmod -R 755 /etc/skel/.vscode/`
 
