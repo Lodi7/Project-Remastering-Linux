@@ -185,14 +185,15 @@ Jadi satu dengan skrip otomatis
  
 ### Merubah posisi login window
 1. `sudo nano /etc/lightdm/slick-greeter.conf/`
-2. isi dengan folder lightdm yang telah disiapkan 
-3. kalau belum di chroot `sudo systemctl restart lightdm`
-4. Jika gagal isi semua /etc/lightdm dengan folder yang telah disiapkan
+2. isi dengan folder lightdm yang telah disiapkan
+3. tambahkan permission `sudo chmod 644 /etc/lightdm/slick-greeter.conf`
+4. kalau belum di chroot `sudo systemctl restart lightdm`
+5. Jika gagal isi semua /etc/lightdm dengan folder yang telah disiapkan
 
 ### Mengganti icon start menu
 1. siapkan logo icon nya yaitu LOS.png
 2. pindahkan dengan `mv /lokasi/path/LOS.png /usr/share/icons/
-3. berikan permission `sudo chmod +x /usr/share/icons/LOS.png`
+3. berikan permission `sudo chmod 644 /usr/share/icons/LOS.png`
 4. Jangan lupa ganti pathnya di /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce-panel.xml
 
 ### Menyiapkan plank
@@ -200,6 +201,8 @@ Jadi satu dengan skrip otomatis
 2. isi dengan folder plank yang sudah disiapkan
 3. buat autostart nya `sudo nano /etc/skel/.config/autostart/plank.desktop`
 4. isi dengan file yang sudah disiapkan
+5. berikan permission jika belum `chmod 755 /etc/skel/.config/plank terus /plank/dock1 dan launcher kalau belum drwxr-xr-x`
+6. `chmod 644 /etc/skel/.config/plank/dock/lauchers/*`
 
 ### Menghapus welcome mint
 1. hapus file autostart nya `rm -r /etc/xdg/autostart/mintwelcome.desktop`
@@ -250,9 +253,11 @@ Ada 2 cara
 ## Step 8 Menambahkan Skrip Otomatis
 1. Siapkah skrip otomatis yang ingin digunakan (direpo firstboot.sh)
 2. pindahkan skrip ke `mv /path/lokasi/firstboot.sh /usr/local/bin/nama-skrip.sh`
-3. Berikan akses `chmod +x /usr/local/bin/nama-skrip.sh`
-4. Buat/edit sudoers `sudo visudo -f /etc/sudoers.d/auto`
-5. Isi dengan `ALL ALL=(ALL) NOPASSWD: /usr/local/bin/firstboot.sh`
-6. Berikan permission `sudo chmod 440 /etc/sudoers.d/auto`
-7. buat autostart desktop `sudo nano /etc/skel/.config/autostart/firstboot.desktop`
-8. isi dengan yang file yang telah disiapkan di autostart folder
+3. Berikan akses `chmod 755 /usr/local/bin/nama-skrip.sh`
+4. lalu `sudo sed -i 's/\r$//' /usr/local/bin/firstboot.sh`
+5. Buat/edit sudoers `sudo visudo -f /etc/sudoers.d/auto`
+6. Isi dengan `ALL ALL=(ALL) NOPASSWD: /usr/local/bin/firstboot.sh`
+7. Berikan permission `sudo chmod 440 /etc/sudoers.d/auto`
+8. buat autostart desktop `sudo nano /etc/skel/.config/autostart/firstboot.desktop`
+9. isi dengan yang file yang telah disiapkan di autostart folder
+- **Note** : folder autostart kalau belum drwxr-xr-r `chmod 755 /etc/skel/.config/autostart` terus desktopnya `chmod 644 /etc/skel/.config/autostart/*` kalau belum -rw-r--r--
