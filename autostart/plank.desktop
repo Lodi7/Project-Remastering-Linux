@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=plank
+Exec=plank
+X-GNOME-Autostart-enabled=true

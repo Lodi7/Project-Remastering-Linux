@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Skrip First Boot
+Exec=bash -c 'if [ ! -f /run/live/medium/live/filesystem.squashfs ] && [ ! -f /cdrom/casper/filesystem.squashfs ] && ! grep -q "boot=live" /proc/cmdline 2>/dev/null && ! grep -q "boot=casper" /proc/cmdline 2>/dev/null; then xfce4-terminal --hold --title="Auto Configuration LOS" -e "sudo /usr/local/bin/firstboot.sh"; fi'
+Terminal=false
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-enabled=true
