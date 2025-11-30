@@ -1,0 +1,19 @@
+- help.html
+EN=Just installed LOS? Need assistance or want to learn more? Visit our GitHub repository where Lodi7 provides comprehensive documentation, guides, and support.
+
+ID=Baru menginstal LOS? Butuh bantuan atau ingin belajar lebih lanjut? Kunjungi repository GitHub kami di mana Lodi7 menyediakan dokumentasi lengkap, panduan, dan dukungan.
+
+- office.html
+EN=Use VSCode to write, edit, and debug your code with powerful features, extensions, and integrated tools that boost your development workflow.
+
+ID=Gunakan VSCode untuk menulis, mengedit, dan debug kode Anda dengan fitur yang powerful, ekstensi, dan tools terintegrasi yang meningkatkan alur kerja development Anda.
+
+- web.html
+EN=Be fast, private, and secure on the web with Brave Browser. Block ads and trackers while browsing your favorite sites.
+
+ID=Browsing cepat, privat, dan aman di web dengan Brave Browser. Blokir iklan dan tracker saat menjelajahi situs favorit Anda.
+
+- welcome.html
+EN=Welcome and thank you for choosing LOS. This slideshow will show you around while the system is being installed.
+
+ID=Selamat datang dan terima kasih telah memilih LOS. Slideshow ini akan memandu Anda selama sistem sedang diinstal.
