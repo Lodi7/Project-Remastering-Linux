@@ -261,3 +261,17 @@ Ada 2 cara
 8. buat autostart desktop `sudo nano /etc/skel/.config/autostart/firstboot.desktop`
 9. isi dengan yang file yang telah disiapkan di autostart folder
 - **Note** : folder autostart kalau belum drwxr-xr-r `chmod 755 /etc/skel/.config/autostart` terus desktopnya `chmod 644 /etc/skel/.config/autostart/*` kalau belum -rw-r--r--
+
+## Step 9 Mengganti Menu Entry install dan slideshow
+### Mengganti menu entry 
+1. setelah folder project cubic ada cari folder bernama custom-disk
+2. lalu ke /custom-disk/boot/grub/grub.cfg
+3. ganti namanya sesuai dengan punya kita
+- **Note** : jika mau yang dual bootnya juga bisa edit ke `nano /etc/os-release` dan ganti sesuai yang di inginkan yang boleh hanya NAME, PRETTY_NAME,VERSION,VERSION_CODENAME
+
+### Mengganti slideshow waktu installasi
+1. masukkan ke `cd /usr/share/ubiquity-slideshow/slides/`
+2. edit file welcome.html,office.html,web.html,help.html baik deafault maupun indo , kalau indo di `/l10n/id/`
+3. tambahkan icons dan screenshots yang sudah disiapkan ke folder `/icons` dan `/screenshots`
+4. setelah semuanya sudah jangan lupa cek permission untuk yang *.png `chmod 644 /path/ke/arah/*.png`
+5. untuk folder pakai `chmod 755`
