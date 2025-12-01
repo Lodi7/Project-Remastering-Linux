@@ -60,8 +60,28 @@ echo ""
 # ===== Langkah 1: Update & Upgrade Sistem =====
 echo -e "${CYAN}[1/8] Memperbarui dan meng-upgrade sistem...${NC}"
 apt-get update || error_exit "Gagal update repository"
-apt-get -y upgrade || error_exit "Gagal upgrade sistem"
+echo -e "${CYAN}Ditemukan paket-paket yang bisa di-upgrade.${NC}"
+echo -e "${CYAN}Proses upgrade dapat memakan waktu beberapa menit.${NC}"
+echo ""
+read -p "$(echo -e ${KUNING})Apakah Anda ingin meng-upgrade sistem sekarang? (y/n): $(echo -e ${NC})" DO_UPGRADE
+DO_UPGRADE=${DO_UPGRADE:-y}
+
+if [[ "$DO_UPGRADE" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo -e "${CYAN}Memulai upgrade sistem...${NC}"
+    apt-get -y upgrade || error_exit "Gagal upgrade sistem"
+    echo -e "${HIJAU}[OK] Sistem LOS telah diperbarui!${NC}"
+else
+    echo ""
+    echo -e "${KUNING}[SKIP] Upgrade sistem dilewati.${NC}"
+    echo -e "${CYAN}Anda bisa upgrade manual nanti dengan: ${NC}sudo apt-get upgrade${NC}"
+fi
+
+# Cleanup selalu dijalankan
+echo -e "${CYAN}Membersihkan paket yang tidak diperlukan...${NC}"
 apt-get -y autoremove && apt-get -y autoclean
+echo -e "${HIJAU}[OK] Cleanup selesai!${NC}"
+
 
 # Install xdotool untuk auto-close terminal (jika belum ada)
 if ! command -v xdotool &> /dev/null; then
