@@ -304,7 +304,7 @@ if dpkg -l | grep -q phpmyadmin && systemctl is-active --quiet mariadb 2>/dev/nu
             # Full access
             mysql -u root <<MYSQL_SCRIPT 2>/dev/null
 CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
-GRANT ALL PRIVILEGES ON . TO '$DB_USER'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'localhost' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 MYSQL_SCRIPT
             
@@ -322,9 +322,9 @@ MYSQL_SCRIPT
             DB_NAME="${DB_USER}_db"
             
             mysql -u root <<MYSQL_SCRIPT 2>/dev/null
-CREATE DATABASE IF NOT EXISTS \$DB_NAME\;
+CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`;
 CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';
-GRANT ALL PRIVILEGES ON \$DB_NAME\.* TO '$DB_USER'@'localhost';
+GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';
 FLUSH PRIVILEGES;
 MYSQL_SCRIPT
             
