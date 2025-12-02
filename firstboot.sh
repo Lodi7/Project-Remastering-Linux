@@ -262,8 +262,8 @@ if command -v php &> /dev/null && command -v composer &> /dev/null && systemctl 
     BACKEND_INSTALLED=true
 fi
 
-# Cek Mobile Dev - PERBAIKAN: Cek snap dan flutter
-if command -v snap &> /dev/null && snap list 2>/dev/null | grep -q flutter && command -v adb &> /dev/null; then
+# Cek Mobile Dev - PERBAIKAN: Cek flutter manual install
+if command -v flutter &> /dev/null && command -v adb &> /dev/null; then
     MOBILE_INSTALLED=true
 fi
 
@@ -318,7 +318,7 @@ if [ "$MOBILE_INSTALLED" = true ]; then
 else
     echo -e "${KUNING}  4)${NC} Mobile Dev (Flutter + Android)"
 fi
-echo -e "${NC}       -> snapd, flutter(snap), adb, android-sdk"
+echo -e "${NC}       -> flutter(manual), adb, android-sdk"
 
 # Game Dev
 if [ "$GAME_INSTALLED" = true ]; then
@@ -367,7 +367,7 @@ install_packages() {
     fi
 }
 
-# ===== Fungsi Install Yarn dengan GPG Key (PERBAIKAN) =====
+# ===== Fungsi Install Yarn dengan GPG Key =====
 install_yarn_repo() {
     echo -e "${CYAN}Menambahkan repository Yarn...${NC}"
     
@@ -400,7 +400,7 @@ install_yarn_repo() {
     fi
 }
 
-# ===== Fungsi Install Sass (PERBAIKAN untuk dart-sass) =====
+# ===== Fungsi Install Sass =====
 install_sass_tools() {
     echo -e "${CYAN}Menginstall Sass compilers...${NC}"
     
@@ -412,7 +412,7 @@ install_sass_tools() {
         echo -e "${KUNING}! sassc gagal, mencoba alternatif...${NC}"
     fi
     
-    # Alternatif: Install dart-sass via npm (lebih reliable)
+    # Alternatif: Install dart-sass via npm
     if command -v npm &> /dev/null; then
         echo -e "${CYAN}Menginstall sass via npm...${NC}"
         npm install -g sass 2>/dev/null && {
@@ -426,68 +426,151 @@ install_sass_tools() {
     return 1
 }
 
-# ===== Fungsi Install Snapd dan Flutter (PERBAIKAN) =====
+# ===== Fungsi Install Flutter dan Android Tools (TANPA SNAP) =====
 install_flutter_mobile() {
     echo -e "${CYAN}=== Menginstall paket Mobile Development ===${NC}"
     
-    # 1. Install snapd terlebih dahulu
-    echo -e "${CYAN}Menginstall snapd...${NC}"
-    if ! command -v snap &> /dev/null; then
-        apt-get install -y snapd || {
-            echo -e "${MERAH}[ERROR] Gagal install snapd${NC}"
-            echo -e "${KUNING}Flutter membutuhkan snapd untuk diinstall${NC}"
-            return 1
-        }
-        
-        # Start snapd service
-        systemctl enable snapd.socket 2>/dev/null
-        systemctl start snapd.socket 2>/dev/null
-        
-        # Tunggu snapd siap
-        echo -e "${CYAN}Menunggu snapd siap...${NC}"
-        sleep 3
-        
-        # Coba jalankan snap untuk memastikan
-        snap version &>/dev/null || {
-            echo -e "${MERAH}[ERROR] snapd tidak berfungsi dengan baik${NC}"
-            return 1
-        }
-        
-        echo -e "${HIJAU}✓ snapd berhasil diinstall dan aktif${NC}"
-    else
-        echo -e "${HIJAU}✓ snapd sudah terinstall${NC}"
-    fi
+    # 1. Install dependencies
+    echo -e "${CYAN}Menginstall dependencies...${NC}"
+    install_packages curl git unzip xz-utils zip libglu1-mesa adb android-sdk-platform-tools-common
     
-    # 2. Install Flutter via snap
-    echo -e "${CYAN}Menginstall Flutter via Snap...${NC}"
-    if ! snap list 2>/dev/null | grep -q flutter; then
-        snap install flutter --classic 2>&1 | tee /tmp/flutter_install.log
-        
-        if [ ${PIPESTATUS[0]} -eq 0 ]; then
-            echo -e "${HIJAU}✓ Flutter berhasil diinstall!${NC}"
-            
-            # Setup Flutter path untuk user
-            FLUTTER_PATH="/snap/bin"
-            if ! echo "$PATH" | grep -q "$FLUTTER_PATH"; then
-                echo 'export PATH="$PATH:/snap/bin"' >> /home/$TARGET_USER/.bashrc
-                echo -e "${HIJAU}✓ Flutter path ditambahkan ke .bashrc${NC}"
-            fi
+    # 2. Download dan install Flutter manual
+    echo -e "${CYAN}Menginstall Flutter (manual download)...${NC}"
+    
+    FLUTTER_DIR="/opt/flutter"
+    FLUTTER_VERSION="stable"
+    
+    if [ -d "$FLUTTER_DIR" ]; then
+        echo -e "${KUNING}! Flutter sudah ada di $FLUTTER_DIR${NC}"
+        read -p "$(echo -e ${KUNING})Hapus dan install ulang? (y/n): $(echo -e ${NC})" REINSTALL
+        if [[ "$REINSTALL" =~ ^[Yy]$ ]]; then
+            rm -rf "$FLUTTER_DIR"
         else
-            echo -e "${MERAH}[ERROR] Flutter gagal diinstall${NC}"
-            echo -e "${CYAN}Log error tersimpan di: /tmp/flutter_install.log${NC}"
-            cat /tmp/flutter_install.log
-            return 1
+            echo -e "${HIJAU}✓ Menggunakan Flutter yang sudah ada${NC}"
+            
+            # Setup PATH jika belum ada
+            if ! command -v flutter &> /dev/null; then
+                echo 'export PATH="$PATH:/opt/flutter/bin"' >> /home/$TARGET_USER/.bashrc
+                export PATH="$PATH:/opt/flutter/bin"
+            fi
+            return 0
         fi
-    else
-        echo -e "${HIJAU}✓ Flutter sudah terinstall${NC}"
     fi
     
-    # 3. Install Android tools
-    echo -e "${CYAN}Menginstall Android tools...${NC}"
-    install_packages adb android-sdk-platform-tools-common
+    # Download Flutter
+    echo -e "${CYAN}Mendownload Flutter SDK...${NC}"
+    cd /tmp
     
-    echo -e "${HIJAU}[OK] Paket Mobile Dev selesai diinstall!${NC}"
-    echo -e "${KUNING}Tips: Jalankan 'flutter doctor' untuk cek konfigurasi Flutter${NC}"
+    # Deteksi arsitektur
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "x86_64" ]; then
+        FLUTTER_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz"
+        FLUTTER_FILE="flutter_linux_x64.tar.xz"
+    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+        FLUTTER_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_arm64_3.24.5-stable.tar.xz"
+        FLUTTER_FILE="flutter_linux_arm64.tar.xz"
+    else
+        echo -e "${MERAH}[ERROR] Arsitektur $ARCH tidak didukung${NC}"
+        return 1
+    fi
+    
+    # Download dengan nama file yang konsisten
+    wget -O "$FLUTTER_FILE" "$FLUTTER_URL" 2>&1 | grep -i "saving\|saved\|error" || {
+        echo -e "${MERAH}[ERROR] Gagal download Flutter SDK${NC}"
+        # Cleanup file download yang gagal
+        rm -f "$FLUTTER_FILE"
+        return 1
+    }
+    
+    # Extract Flutter
+    echo -e "${CYAN}Mengekstrak Flutter SDK...${NC}"
+    tar xf "$FLUTTER_FILE" -C /opt/ || {
+        echo -e "${MERAH}[ERROR] Gagal ekstrak Flutter SDK${NC}"
+        # Cleanup file download
+        rm -f "$FLUTTER_FILE"
+        return 1
+    }
+    
+    # CLEANUP: Hapus file download Flutter
+    echo -e "${CYAN}Membersihkan file download Flutter...${NC}"
+    rm -f "$FLUTTER_FILE"
+    echo -e "${HIJAU}✓ File download Flutter dihapus${NC}"
+    
+    # Set permissions
+    chown -R $TARGET_USER:$TARGET_USER /opt/flutter
+    
+    # Setup PATH untuk user
+    echo -e "${CYAN}Menambahkan Flutter ke PATH...${NC}"
+    if ! grep -q "/opt/flutter/bin" /home/$TARGET_USER/.bashrc; then
+        echo 'export PATH="$PATH:/opt/flutter/bin"' >> /home/$TARGET_USER/.bashrc
+    fi
+    
+    # Export PATH untuk session saat ini
+    export PATH="$PATH:/opt/flutter/bin"
+    
+    # Jalankan flutter precache
+    echo -e "${CYAN}Mendownload Flutter dependencies...${NC}"
+    sudo -u $TARGET_USER /opt/flutter/bin/flutter precache --linux 2>&1 | tail -n 5
+    
+    # 3. Install Android SDK (opsional tapi direkomendasikan)
+    echo ""
+    echo -e "${KUNING}Apakah Anda ingin install Android SDK lengkap? (y/n)${NC}"
+    echo -e "${CYAN}Diperlukan untuk build aplikasi Android (ukuran ~2GB)${NC}"
+    read -p "> " INSTALL_ANDROID_SDK
+    
+    if [[ "$INSTALL_ANDROID_SDK" =~ ^[Yy]$ ]]; then
+        echo -e "${CYAN}Menginstall Android Command Line Tools...${NC}"
+        
+        ANDROID_SDK_DIR="/home/$TARGET_USER/Android/Sdk"
+        ANDROID_TOOLS_FILE="commandlinetools-linux.zip"
+        
+        sudo -u $TARGET_USER mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
+        
+        cd /tmp
+        wget -O "$ANDROID_TOOLS_FILE" https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        
+        if [ -f "$ANDROID_TOOLS_FILE" ]; then
+            sudo -u $TARGET_USER unzip -q "$ANDROID_TOOLS_FILE" -d "$ANDROID_SDK_DIR/cmdline-tools/"
+            sudo -u $TARGET_USER mv "$ANDROID_SDK_DIR/cmdline-tools/cmdline-tools" "$ANDROID_SDK_DIR/cmdline-tools/latest"
+            
+            # CLEANUP: Hapus file download Android Tools
+            echo -e "${CYAN}Membersihkan file download Android SDK...${NC}"
+            rm -f "$ANDROID_TOOLS_FILE"
+            echo -e "${HIJAU}✓ File download Android SDK dihapus${NC}"
+            
+            # Setup Android SDK PATH
+            if ! grep -q "ANDROID_HOME" /home/$TARGET_USER/.bashrc; then
+                cat >> /home/$TARGET_USER/.bashrc <<'ANDROID_ENV'
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+ANDROID_ENV
+            fi
+            
+            echo -e "${HIJAU}✓ Android Command Line Tools berhasil diinstall${NC}"
+            echo -e "${KUNING}Note: Jalankan 'flutter doctor --android-licenses' untuk accept licenses${NC}"
+        else
+            echo -e "${MERAH}[ERROR] Gagal download Android Command Line Tools${NC}"
+            # Cleanup jika ada file corrupt
+            rm -f "$ANDROID_TOOLS_FILE"
+        fi
+    fi
+    
+    # CLEANUP FINAL: Pastikan tidak ada sisa file di /tmp
+    echo -e "${CYAN}Membersihkan semua file temporary...${NC}"
+    cd /tmp
+    rm -f flutter*.tar.xz commandlinetools*.zip 2>/dev/null
+    echo -e "${HIJAU}✓ Cleanup selesai!${NC}"
+    
+    echo ""
+    echo -e "${HIJAU}[OK] Flutter Mobile Dev selesai diinstall!${NC}"
+    echo ""
+    echo -e "${KUNING}=== PENTING: Restart terminal atau jalankan: ===${NC}"
+    echo -e "${CYAN}source ~/.bashrc${NC}"
+    echo ""
+    echo -e "${KUNING}Kemudian jalankan untuk cek status:${NC}"
+    echo -e "${CYAN}flutter doctor -v${NC}"
+    echo ""
 }
 
 # ===== Fungsi Konfigurasi phpMyAdmin =====
@@ -702,7 +785,6 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] Data Science sudah terinstall${NC}"
         else
             echo -e "${CYAN}=== Menginstall Data Science ===${NC}"
-            # PERBAIKAN: Hapus pytorch karena tidak ada di repo standar
             install_packages python3-numpy python3-pandas python3-sklearn python3-matplotlib python3-seaborn jupyter-notebook python3-scipy
             
             # Opsi install PyTorch via pip
