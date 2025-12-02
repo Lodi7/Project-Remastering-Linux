@@ -597,7 +597,7 @@ install_sass_tools() {
 
 # ===== Fungsi Install Flutter dan Android Tools (TANPA SNAP) =====
 install_flutter_mobile() {
-    echo -e "${CYAN}=== Menginstall paket Mobile Development ===${NC}"
+    echo -e "${CYAN}Menginstall paket Mobile Development...${NC}"
     
     # 1. Install dependencies
     echo -e "${CYAN}Menginstall dependencies...${NC}"
@@ -1003,7 +1003,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] Frontend sudah terinstall${NC}"
             echo ""
         else
-            echo -e "${BIRU_CERAH}Instalasi Frontend Development Tools${NC}"
+            echo -e "${CYAN}Instalasi Frontend Development Tools${NC}"
             echo ""
             
             install_yarn_repo
@@ -1023,7 +1023,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] Backend sudah terinstall${NC}"
             echo ""
         else
-            echo -e "${BIRU_CERAH}Instalasi Backend Development Tools${NC}"
+            echo -e "${CYAN}Instalasi Backend Development Tools${NC}"
             echo ""
             
             install_packages php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2
@@ -1055,7 +1055,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] Fullstack sudah terinstall${NC}"
             echo ""
         else
-            echo -e "${BIRU_CERAH}Instalasi Fullstack Development Tools${NC}"
+            echo -e "${CYAN}Instalasi Fullstack Development Tools${NC}"
             echo ""
             
             # Frontend
@@ -1117,7 +1117,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] Game Dev sudah terinstall${NC}"
             echo ""
         else
-            echo -e "${BIRU_CERAH}Instalasi Game Development Tools${NC}"
+            echo -e "${CYAN}Instalasi Game Development Tools${NC}"
             echo ""
             
             install_packages godot3 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
@@ -1132,7 +1132,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] Data Science sudah terinstall${NC}"
             echo ""
         else
-            echo -e "${BIRU_CERAH}Instalasi Data Science & ML Tools${NC}"
+            echo -e "${CYAN}Instalasi Data Science & ML Tools${NC}"
             echo ""
             
             install_packages python3-numpy python3-pandas python3-sklearn python3-matplotlib python3-seaborn jupyter-notebook python3-scipy
@@ -1178,7 +1178,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${KUNING}[SKIP] DevOps sudah terinstall${NC}"
             echo ""
         else
-            echo -e "${BIRU_CERAH}Instalasi DevOps & Automation Tools${NC}"
+            echo -e "${CYAN}Instalasi DevOps & Automation Tools${NC}"
             echo ""
             
             install_packages ansible nginx apache2-utils
