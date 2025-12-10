@@ -123,7 +123,7 @@ echo ""
 sleep 0.5
 
 # ===== Langkah 1: Update & Upgrade Sistem =====
-echo -e "${CYAN}[1/8] Memperbarui dan meng-upgrade sistem...${NC}"
+echo -e "${CYAN}[1/7] Memperbarui dan meng-upgrade sistem...${NC}"
 # Update repository
 (apt-get update > /tmp/apt-update.log 2>&1) &
 show_loading $! "Memperbarui daftar paket"
@@ -167,7 +167,7 @@ if [[ "$DO_UPGRADE" =~ ^[Yy]$ ]]; then
 else
     echo ""
     echo -e "${KUNING}Upgrade sistem dilewati.${NC}"
-    echo -e "${CYAN}Anda bisa upgrade manual nanti dengan: ${NC}sudo apt-get upgrade${NC}"
+    echo -e "${CYAN}Anda bisa upgrade manual nanti dengan: ${NC}sudo apt upgrade${NC}"
 fi
 
 echo ""
@@ -186,7 +186,7 @@ echo ""
 sleep 0.5
 
 # ===== Langkah 2: Konfigurasi Git =====
-echo -e "${CYAN}[2/8] Mengatur Git...${NC}"
+echo -e "${CYAN}[2/7] Mengatur Git...${NC}"
 while true; do
     read -p "$(echo -e ${KUNING})Masukkan Nama Git Anda: $(echo -e ${NC})" GIT_NAME
     if [ -n "$GIT_NAME" ]; then
@@ -218,7 +218,7 @@ echo ""
 sleep 0.5
 
 # ===== Langkah 3: Tambahkan User ke Grup Docker =====
-echo -e "${CYAN}[3/8] Menambahkan user '$TARGET_USER' ke grup Docker...${NC}"
+echo -e "${CYAN}[3/7] Menambahkan user '$TARGET_USER' ke grup Docker...${NC}"
 # Cek grup docker
 if ! getent group docker > /dev/null 2>&1; then
     echo -ne "${CYAN}Membuat grup Docker...${NC}"
@@ -414,7 +414,7 @@ echo ""
 sleep 0.5
 
 # ===== Menu Paket Development =====
-echo -e "${CYAN}[4/8] Pilih paket tambahan sesuai bidang development:${NC}"
+echo -e "${CYAN}[4/7] Pilih paket tambahan sesuai bidang development:${NC}"
 echo ""
 echo -e "${KUNING}  0)${NC} Default (tanpa paket tambahan)"
 echo -e "${NC}       -> python3,gcc,node.js,java,git,docker,Vscode"
@@ -1206,7 +1206,7 @@ done
 
 sleep 1
 # ===== Langkah 5: Buat folder VS Code dan settings.json =====
-echo -e "${CYAN}[5/8] Menyiapkan VS Code User settings...${NC}"
+echo -e "${CYAN}[5/7] Menyiapkan VS Code User settings...${NC}"
 VSCODE_DIR="/home/$TARGET_USER/.config/Code/User"
 sudo -u $TARGET_USER mkdir -p "$VSCODE_DIR" || error_exit "Gagal membuat direktori VS Code"
 sudo -u $TARGET_USER tee "$VSCODE_DIR/settings.json" > /dev/null <<'EOF'
@@ -1272,39 +1272,16 @@ fi
 sleep 0.5
 
 # ===== Langkah 6: Buat Workspace =====
-echo -e "${CYAN}[6/8] Membuat folder projects dan workspace...${NC}"
+echo ""
+echo -e "${CYAN}[6/7] Membuat folder projects dan workspace...${NC}"
 sudo -u $TARGET_USER mkdir -p /home/$TARGET_USER/Workspace || echo -e "${KUNING}[WARNING] Gagal membuat Workspace${NC}"
 sudo -u $TARGET_USER mkdir -p /home/$TARGET_USER/Projects || echo -e "${KUNING}[WARNING] Gagal membuat Projects${NC}"
 echo -e "${HIJAU}[OK] Folder projects dan workspace siap digunakan!${NC}"
 sleep 0.5
 
-# ===== Langkah 7: Konfigurasi Plank Dock =====
-echo -e "${CYAN}[7/8] Mengkonfigurasi Plank dock...${NC}"
-
-# Pastikan Plank terinstall
-if command -v plank &> /dev/null; then
-    # Konfigurasi via gsettings
-    sudo -u $TARGET_USER gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ zoom-enabled true
-    sudo -u $TARGET_USER gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ zoom-percent 130
-    sudo -u $TARGET_USER gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ theme 'Default'
-    sudo -u $TARGET_USER gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ alignment 'center'
-    sudo -u $TARGET_USER gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ position 'bottom'
-    
-    # Restart Plank jika sedang berjalan
-    if pgrep -u $TARGET_USER plank > /dev/null; then
-        sudo -u $TARGET_USER killall plank 2>/dev/null
-        sleep 1
-        sudo -u $TARGET_USER nohup plank &>/dev/null &
-    fi
-    
-    echo -e "${HIJAU}[OK] Plank dock berhasil dikonfigurasi!${NC}"
-else
-    echo -e "${KUNING}[WARNING] Plank tidak terinstall, melewati konfigurasi${NC}"
-fi
-sleep 0.5
-
 # ===== Langkah 7: Finish & Cleanup =====
-echo -e "${CYAN}[8/8] Menyelesaikan konfigurasi...${NC}"
+echo ""
+echo -e "${CYAN}[7/7] Menyelesaikan konfigurasi...${NC}"
 if [ -f /home/$TARGET_USER/.config/autostart/firstboot.desktop ]; then
     rm -f /home/$TARGET_USER/.config/autostart/firstboot.desktop
     echo -e "${HIJAU}[OK] File autostart firstboot dihapus!${NC}"
