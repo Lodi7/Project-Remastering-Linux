@@ -147,17 +147,16 @@ Jadi satu dengan skrip otomatis
   - Untuk Wallpaper atau Background gunakan `sudo mv nama-bg /usr/share/backgrounds` atau `sudo mv nama-bg /usr/share/xfce4/backdrops/`
 - **Note** : Pastikan sebelumnya kalian sudah di folder tempat tema yang kalian download dengan `cd ~/path-folder-tema` atau jika tidak menggunakan cubic **drag** & **drop** ke cd /usr/share/pathnya
 
-### Mengatur hak akses (opsional)
+### Mengatur hak akses/permission (opsional)
 #### GTK Theme
-- `sudo chmod -R 755 /usr/share/themes/nama-gtk-theme`
-- `sudo chown -R root:root /usr/share/themes/nama-gtk-theme`
+- `sudo chmod -R 755 /usr/share/themes/VALYRIAN-Blue-Steel`
 
 #### Window Manager Theme
 - `sudo chmod -R 755 /usr/share/themes/nama-wm-theme`
 - `sudo chown -R root:root /usr/share/themes/nama-wm-theme`
 
 #### Icon Theme
-- `sudo chmod -R 755 /usr/share/icons/nama-icon-theme`
+- `sudo chmod -R 755 /usr/share/icons/Colloid-Dark`
 - `sudo chown -R root:root /usr/share/icons/nama-icon-theme`
 
 #### Cursor Theme
@@ -165,11 +164,12 @@ Jadi satu dengan skrip otomatis
 - `sudo chown -R root:root /usr/share/icons/nama-cursor-theme`
 
 #### Wallpaper
-- `sudo chmod 644 /usr/share/backgrounds/nama-wallpaper.jpg`
+- `sudo chmod 644 /usr/share/backgrounds/L.png`
+- `sudo chmod 644 /usr/share/xfce4/backdrops/L.png`
 - `sudo chown root:root /usr/share/backgrounds/nama-wallpaper.jpg`
 
 ### Mengatur Xfce untuk pakai tema
-### Cara 1 (hanya user lokal saja)
+### Cara 1 (hanya user lokal saja) (gak kepakek di cubic)
 #### GTK Theme
   `xfconf-query -c xsettings -p /Net/ThemeName -s "nama-gtk-theme" --create`
 #### Windows Manager Theme
@@ -205,17 +205,17 @@ Jadi satu dengan skrip otomatis
    - `sleep 2`
  
 ### Merubah posisi login window
-1. `sudo nano /etc/lightdm/slick-greeter.conf/`
+1. `sudo nano /etc/lightdm/slick-greeter.conf/` atau tinggal salin file jadinya
 2. isi dengan folder lightdm yang telah disiapkan
 3. tambahkan permission `sudo chmod 644 /etc/lightdm/slick-greeter.conf`
-4. kalau belum di chroot `sudo systemctl restart lightdm`
+4. kalau belum di chroot `sudo systemctl restart lightdm` (gak pakai dicubic)
 5. Jika gagal isi semua /etc/lightdm dengan folder yang telah disiapkan
 
 ### Mengganti icon start menu
 1. siapkan logo icon nya yaitu LOS.png
 2. pindahkan dengan `mv /lokasi/path/LOS.png /usr/share/icons/
 3. berikan permission `sudo chmod 644 /usr/share/icons/LOS.png`
-4. Jangan lupa ganti pathnya di /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce-panel.xml
+4. Jangan lupa ganti pathnya start menu di /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce-panel.xml kalau belum
 
 ### Menyiapkan plank
 1. buat folder baru `mkdir /etc/skel/.config/plank/dock1/launchers/`
@@ -226,9 +226,9 @@ Jadi satu dengan skrip otomatis
 6. `chmod 644 /etc/skel/.config/plank/dock/lauchers/*`
 
 ### Menghapus welcome mint
-1. hapus file autostart nya `rm -r /etc/xdg/autostart/mintwelcome.desktop`
+1. hapus file autostart nya `rm -r /etc/xdg/autostart/mintwelcome.desktop` dan `rm -r /etc/xdg/autostart/minupdate.desktop`
 
-### Merubah Tema grub (opsional)
+### Merubah Tema grub (opsional) 
 Ada 2 cara
 #### Cara 1
 1. Siapkan grub themes yang akan digunakan
