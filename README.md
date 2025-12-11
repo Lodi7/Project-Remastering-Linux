@@ -18,6 +18,27 @@
 1. `sudo nano /etc/default/grub`
 2. Cari GRUB_CMDLINE_LINUX_DEFAULT
 3. Edit isinya menjadi GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 panic=10 fsck.mode=auto fsck.repair=yes"
+   - Penjelasan Fungsi Masing-Masing Parameter
+      - quiet
+        - Menyembunyikan sebagian besar pesan booting.
+        - Sistem tetap berjalan normal, tapi output kernel tidak tampil di layar.
+        - Boot jadi lebih bersih/minimalis.
+      - splash
+         - Menampilkan tampilan grafis (gambar/animasi) saat boot, seperti Plymouth.
+         - Biasanya dipasangkan dengan quiet.
+      - loglevel=3
+         - Menentukan tingkat verbosity pesan kernel.
+         - Nilai 3 = hanya menampilkan pesan penting (error, warning).
+         - Cocok untuk membuat boot lebih "bersih" tapi tetap menampilkan error penting.
+      - panic=10
+         - Jika kernel mengalami kernel panic, sistem akan otomatis reboot setelah 10 detik.
+         - Berguna di server/headless environment agar tidak hang selamanya.
+      - fsck.mode=auto
+         - Mengatur perilaku fsck (pemeriksaan filesystem) saat boot.
+         - auto = biarkan sistem memutuskan, biasanya memeriksa otomatis jika perlu.
+      - fsck.repair=yes
+         - Menginstruksikan sistem untuk memperbaiki kerusakan filesystem secara otomatis tanpa menunggu input.
+         - Cocok untuk sistem yang startup otomatis (server, kiosk), karena tidak memblok boot.
 - **Note** : Jika tidak menggunakan cubic dan langsung merubahnya di terminal lakukan `sudo update-grub` lalu `sudo reboot`
 
 ## Step 4 install aplikasi yang dibutuhkan
