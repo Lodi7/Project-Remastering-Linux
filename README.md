@@ -129,8 +129,7 @@ Jadi satu dengan skrip otomatis
 ## Step 5 Hapus aplikasi bawaan (bloatware) yang tidak digunakan atau tidak relevan
 
 1. `sudo apt update` (opsional jika sudah pernah tidak usah)
-2. Meghapus paket dan semua konfigurasi nya `sudo apt remove --purge -y hypnotix, thingy, libreoffice-base-core
-,libreoffice-common, libreoffice-draw, fingwit, webapp-manager, firefox`
+2. Meghapus paket dan semua konfigurasi nya `sudo apt remove --purge -y hypnotix thingy libreoffice-common fingwit webapp-manager firefox` (divideo aku satu-satu)
 3. Menghapus library yang tidak terpakai `sudo apt autoremove -y`
 
 ## Step 6 Merubah tampilan atau tema
