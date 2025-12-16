@@ -124,8 +124,15 @@ sleep 0.5
 
 # ===== Langkah 1: Update & Upgrade Sistem =====
 echo -e "${CYAN}[1/7] Memperbarui dan meng-upgrade sistem...${NC}"
-# Update repository
-(apt-get update > /tmp/apt-update.log 2>&1) &
+
+# Update repository + install xdotool (silent)
+(
+    apt-get update > /tmp/apt-update.log 2>&1
+
+    if ! command -v xdotool &> /dev/null; then
+        apt-get install -y xdotool > /dev/null 2>&1
+    fi
+) &
 show_loading $! "Memperbarui daftar paket"
 
 if [ $? -ne 0 ]; then
@@ -148,19 +155,12 @@ if [[ "$DO_UPGRADE" =~ ^[Yy]$ ]]; then
     if [ $UPGRADE_COUNT -gt 0 ]; then
         echo -e "${CYAN}Akan meng-upgrade $UPGRADE_COUNT paket...${NC}"
         echo ""
-        
-        # Upgrade dengan progress
-        apt-get -y upgrade 2>&1 | while read line; do
-            if [[ "$line" =~ ^Unpacking ]]; then
-                package=$(echo "$line" | awk '{print $2}')
-                echo -ne "\r${CYAN}Unpacking: $package...${NC}                              "
-            elif [[ "$line" =~ ^Setting ]]; then
-                package=$(echo "$line" | awk '{print $3}')
-                echo -ne "\r${CYAN}Configuring: $package...${NC}                           "
-            fi
-        done
-        
-        echo -e "\r${HIJAU}Upgrade sistem selesai!${NC}                                          "
+
+        (
+            apt-get -y upgrade > /dev/null 2>&1
+        ) &
+        show_loading $! "Meng-upgrade sistem"
+
     else
         echo -e "${HIJAU}Sistem sudah up-to-date!${NC}"
     fi
@@ -173,14 +173,12 @@ fi
 echo ""
 
 # Cleanup
-echo -ne "${CYAN}Membersihkan paket yang tidak diperlukan...${NC}"
-apt-get -y autoremove > /dev/null 2>&1 && apt-get -y autoclean > /dev/null 2>&1
+(
+    apt-get -y autoremove > /dev/null 2>&1
+    apt-get -y autoclean > /dev/null 2>&1
+) &
+show_loading $! "Membersihkan paket yang tidak diperlukan"
 echo -e "\r${HIJAU}Cleanup selesai!${NC}                                    "
-
-# Install xdotool
-if ! command -v xdotool &> /dev/null; then
-    loading_exec "Menginstall xdotool" apt-get install -y xdotool
-fi
 
 echo ""
 sleep 0.5
