@@ -786,27 +786,30 @@ install_flutter_mobile() {
     
     cd /tmp
     
-    # Download Flutter dengan progress bar realtime
+    # Download Flutter dengan progress bar realtime (SUDAH BAGUS)
     if ! download_with_progress "$FLUTTER_URL" "$FLUTTER_FILE" "Mendownload Flutter SDK (~600MB)"; then
         rm -f "$FLUTTER_FILE"
         return 1
     fi
     
-    # Extract Flutter dengan progress realtime
+    # Extract Flutter dengan progress realtime (SUDAH BAGUS)
     if ! extract_with_progress "$FLUTTER_FILE" "/opt/" "Mengekstrak Flutter SDK"; then
         rm -f "$FLUTTER_FILE"
         return 1
     fi
     
-    # Cleanup file download
-    echo -ne "${CYAN}Membersihkan file download...${NC}"
-    rm -f "$FLUTTER_FILE"
-    echo -e "\r${HIJAU}File download dihapus (~600MB freed)${NC}                              "
+    # Cleanup file download (PAKAI LOADING)
+    (
+        rm -f "$FLUTTER_FILE"
+    ) &
+    show_loading $! "Membersihkan file download"
+    echo ""
     
-    # Set permissions
-    echo -ne "${CYAN}Mengatur permissions...${NC}"
-    chown -R $TARGET_USER:$TARGET_USER /opt/flutter
-    echo -e "\r${HIJAU}Permissions berhasil diatur${NC}                              "
+    # Set permissions (PAKAI LOADING)
+    (
+        chown -R $TARGET_USER:$TARGET_USER /opt/flutter
+    ) &
+    show_loading $! "Mengatur permissions Flutter"
     echo ""
     
     # Tambahkan ke PATH
@@ -824,17 +827,27 @@ install_flutter_mobile() {
     echo -e "${KUNING}Ini akan memakan waktu beberapa menit...${NC}"
     echo ""
     
-    sudo -u $TARGET_USER /opt/flutter/bin/flutter precache --linux 2>&1 | \
-    while IFS= read -r line; do
-        if [[ "$line" =~ Downloading ]]; then
-            file=$(echo "$line" | awk '{print $2}')
-            echo -ne "\r${CYAN}Downloading: ${file:0:50}...${NC}                                        "
-        elif [[ "$line" =~ "%" ]]; then
-            echo -ne "\r${CYAN}${line}${NC}                                        "
-        fi
-    done
-    
+    # OPSI 1: Pakai show_loading (lebih sederhana, tapi tidak tahu progress)
+    (
+        sudo -u $TARGET_USER /opt/flutter/bin/flutter precache --linux > /tmp/flutter_precache.log 2>&1
+    ) &
+    show_loading $! "Mendownload Flutter dependencies"
     echo ""
+    
+    # ATAU OPSI 2: Pakai progress bar realtime seperti aslinya (lebih informatif)
+    # Uncomment jika mau pakai yang ini:
+    #
+    # sudo -u $TARGET_USER /opt/flutter/bin/flutter precache --linux 2>&1 | \
+    # while IFS= read -r line; do
+    #     if [[ "$line" =~ Downloading ]]; then
+    #         file=$(echo "$line" | awk '{print $2}')
+    #         echo -ne "\r${CYAN}Downloading: ${file:0:50}...${NC}                                        "
+    #     elif [[ "$line" =~ "%" ]]; then
+    #         echo -ne "\r${CYAN}${line}${NC}                                        "
+    #     fi
+    # done
+    # echo ""
+    
     echo -e "${HIJAU}Flutter SDK berhasil diinstall!${NC}"
     echo ""
     
@@ -850,13 +863,16 @@ install_flutter_mobile() {
         ANDROID_SDK_DIR="/home/$TARGET_USER/Android/Sdk"
         ANDROID_TOOLS_FILE="commandlinetools-linux.zip"
         
-        echo -ne "${CYAN}Membuat direktori Android SDK...${NC}"
-        sudo -u $TARGET_USER mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
-        echo -e "\r${HIJAU}Direktori Android SDK dibuat${NC}                              "
+        # Membuat direktori (PAKAI LOADING)
+        (
+            sudo -u $TARGET_USER mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
+        ) &
+        show_loading $! "Membuat direktori Android SDK"
+        echo ""
         
         cd /tmp
         
-        # Download Android SDK dengan progress realtime
+        # Download Android SDK dengan progress realtime (SUDAH BAGUS)
         if ! download_with_progress \
             "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" \
             "$ANDROID_TOOLS_FILE" \
@@ -865,9 +881,7 @@ install_flutter_mobile() {
             return 1
         fi
         
-        # Extract Android SDK
-        echo -ne "${CYAN}Mengekstrak Android Command Line Tools...${NC}"
-        
+        # Extract Android SDK (PAKAI show_loading, lebih cepat dari progress realtime untuk file kecil)
         (
             sudo -u $TARGET_USER unzip -q "$ANDROID_TOOLS_FILE" -d "$ANDROID_SDK_DIR/cmdline-tools/"
             sudo -u $TARGET_USER mv "$ANDROID_SDK_DIR/cmdline-tools/cmdline-tools" "$ANDROID_SDK_DIR/cmdline-tools/latest"
@@ -876,10 +890,12 @@ install_flutter_mobile() {
         
         echo ""
         
-        # Cleanup
-        echo -ne "${CYAN}Membersihkan file download Android SDK...${NC}"
-        rm -f "$ANDROID_TOOLS_FILE"
-        echo -e "\r${HIJAU}File download dihapus (~150MB freed)${NC}                              "
+        # Cleanup (PAKAI LOADING)
+        (
+            rm -f "$ANDROID_TOOLS_FILE"
+        ) &
+        show_loading $! "Membersihkan file download Android SDK"
+        echo ""
         
         # Setup Android SDK PATH
         echo -ne "${CYAN}Menambahkan Android SDK ke PATH...${NC}"
@@ -903,20 +919,21 @@ ANDROID_ENV
         echo ""
     fi
     
-    # CLEANUP FINAL
-    echo -ne "${CYAN}Membersihkan semua file temporary...${NC}"
-    cd /tmp
-    rm -f flutter*.tar.xz commandlinetools*.zip 2>/dev/null
-    echo -e "\r${HIJAU}Cleanup selesai!${NC}                              "
-    
+    # CLEANUP FINAL (PAKAI LOADING)
+    (
+        cd /tmp
+        rm -f flutter*.tar.xz commandlinetools*.zip 2>/dev/null
+    ) &
+    show_loading $! "Membersihkan semua file temporary"
     echo ""
+    
     echo -e "${HIJAU}[OK] Flutter Mobile Dev selesai diinstall!${NC}"
     echo ""
     
     # Source untuk user
-    echo -e "${CYAN}Applying environment changes...${NC}"
+    echo -ne "${CYAN}Applying environment changes...${NC}"
     sudo -u $TARGET_USER bash -c "source /home/$TARGET_USER/.bashrc" 2>/dev/null
-    echo -e "${HIJAU} PATH updated for $TARGET_USER${NC}"
+    echo -e "\r${HIJAU}PATH updated untuk $TARGET_USER${NC}                              "
     
     echo ""
     echo -e "${KUNING}Note: Restart terminal atau jalankan 'source ~/.bashrc' untuk apply PATH${NC}"
