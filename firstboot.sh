@@ -151,38 +151,65 @@ extract_with_progress() {
 }
 
 # ===== Fungsi Install Packages dengan Progress Realtime =====
-install_packages() {
-    install_packages_realtime "$@"
-}
-
-# ===== Fungsi untuk Monitor Command dengan Output Realtime =====
-run_with_output() {
-    local message=$1
-    shift
-    local command="$@"
+install_packages_realtime() {
+    local packages=("$@")
+    local total=${#packages[@]}
+    local current=0
+    local FAILED_PACKAGES=""
     
-    echo -e "${CYAN}${message}${NC}"
+    echo -e "${CYAN}Menginstall ${total} paket...${NC}"
+    echo ""
     
-    # Jalankan command dan tampilkan output penting
-    eval "$command" 2>&1 | while IFS= read -r line; do
-        # Filter output yang penting saja
-        if [[ "$line" =~ (Downloading|Installing|Unpacking|Setting|up|Configuring) ]]; then
-            echo -ne "\r${CYAN}${line:0:70}...${NC}                              "
+    for pkg in "${packages[@]}"; do
+        current=$((current + 1))
+        
+        # Cek apakah sudah terinstall
+        if dpkg -l 2>/dev/null | grep -q "^ii.*$pkg "; then
+            echo -e "${HIJAU}[$current/$total] $pkg ${CYAN}(sudah terinstall)${NC}"
+            continue
+        fi
+        
+        echo -e "${CYAN}[$current/$total] Installing $pkg...${NC}"
+        
+        # Install dengan monitoring progress
+        local last_percent=0
+        apt-get install -y "$pkg" 2>&1 | \
+        while IFS= read -r line; do
+            # Parse progress dari apt
+            if [[ "$line" =~ Progress:.*\[([0-9]+)% ]]; then
+                percent="${BASH_REMATCH[1]}"
+                if [ "$percent" != "$last_percent" ]; then
+                    completed=$((percent / 2))
+                    remaining=$((50 - completed))
+                    printf "\r${CYAN}[$current/$total] $pkg ["
+                    printf "%${completed}s" | tr ' ' '█'
+                    printf "%${remaining}s" | tr ' ' '░'
+                    printf "] ${percent}%%${NC}"
+                    last_percent=$percent
+                fi
+            elif [[ "$line" =~ "Unpacking" ]] || [[ "$line" =~ "Setting up" ]]; then
+                echo -ne "\r${CYAN}[$current/$total] $pkg: $(echo $line | cut -d' ' -f1-3)...${NC}                    "
+            fi
+        done
+        
+        # Cek status instalasi
+        if dpkg -l 2>/dev/null | grep -q "^ii.*$pkg "; then
+            echo -e "\r${HIJAU}[$current/$total] $pkg berhasil diinstall${NC}                                          "
+        else
+            echo -e "\r${MERAH}[$current/$total] $pkg gagal diinstall${NC}                                            "
+            FAILED_PACKAGES="$FAILED_PACKAGES $pkg"
         fi
     done
     
-    local status=${PIPESTATUS[0]}
+    echo ""
     
-    if [ $status -eq 0 ]; then
+    if [ -n "$FAILED_PACKAGES" ]; then
+        echo -e "${KUNING}Paket yang gagal diinstall:$FAILED_PACKAGES${NC}"
+        echo -e "${CYAN}Anda bisa mencoba install manual nanti.${NC}"
         echo ""
-        echo -e "${HIJAU}${message} selesai!${NC}"
-        echo ""
-        return 0
     else
+        echo -e "${HIJAU}Semua paket berhasil diinstall!${NC}"
         echo ""
-        echo -e "${MERAH}${message} gagal!${NC}"
-        echo ""
-        return 1
     fi
 }
 
@@ -597,43 +624,7 @@ echo ""
 
 # ===== Fungsi Install yang Lebih Robust dengan Progress =====
 install_packages() {
-    local packages=("$@")
-    local total=${#packages[@]}
-    local current=0
-    local FAILED_PACKAGES=""
-    
-    echo -e "${CYAN}Menginstall ${total} paket...${NC}"
-    echo ""
-    
-    for pkg in "${packages[@]}"; do
-        current=$((current + 1))
-        
-        # Cek apakah sudah terinstall
-        if dpkg -l | grep -q "^ii.*$pkg "; then
-            echo -e "${HIJAU}[$current/$total] $pkg ${CYAN}(sudah terinstall)${NC}"
-            continue
-        fi
-        
-        echo -ne "${CYAN}[$current/$total] Installing $pkg...${NC}"
-        
-        if apt-get install -y "$pkg" > /tmp/install-$pkg.log 2>&1; then
-            echo -e "\r${HIJAU}[$current/$total] $pkg berhasil diinstall${NC}                              "
-        else
-            echo -e "\r${MERAH}[$current/$total] $pkg gagal diinstall${NC}                                "
-            FAILED_PACKAGES="$FAILED_PACKAGES $pkg"
-        fi
-    done
-    
-    echo ""
-    
-    if [ -n "$FAILED_PACKAGES" ]; then
-        echo -e "${KUNING}Paket yang gagal diinstall:$FAILED_PACKAGES${NC}"
-        echo -e "${CYAN}Anda bisa mencoba install manual nanti.${NC}"
-        echo ""
-    else
-        echo -e "${HIJAU}Semua paket berhasil diinstall!${NC}"
-        echo ""
-    fi
+    install_packages_realtime "$@"
 }
 
 # ===== Fungsi Install Yarn dengan GPG Key & Progress =====
@@ -901,100 +892,6 @@ ANDROID_ENV
     
     echo ""
     echo -e "${KUNING}Note: Restart terminal atau jalankan 'source ~/.bashrc' untuk apply PATH${NC}"
-    echo ""
-}
-    # 3. Install Android SDK
-    echo -e "${KUNING}Apakah Anda ingin install Android SDK lengkap?${NC}"
-    echo -e "${CYAN}Diperlukan untuk build aplikasi Android (ukuran ~2GB)${NC}"
-    echo ""
-    read -p "$(echo -e ${KUNING})Install Android SDK? (y/n): $(echo -e ${NC})" INSTALL_ANDROID_SDK
-    
-    if [[ "$INSTALL_ANDROID_SDK" =~ ^[Yy]$ ]]; then
-        echo ""
-        
-        ANDROID_SDK_DIR="/home/$TARGET_USER/Android/Sdk"
-        ANDROID_TOOLS_FILE="commandlinetools-linux.zip"
-        
-        echo -ne "${CYAN}Membuat direktori Android SDK...${NC}"
-        sudo -u $TARGET_USER mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
-        echo -e "\r${HIJAU}Direktori Android SDK dibuat${NC}                              "
-        
-        cd /tmp
-        
-        echo ""
-        echo -e "${CYAN}Mendownload Android Command Line Tools...${NC}"
-        echo ""
-        
-        wget --progress=bar:force:noscroll -O "$ANDROID_TOOLS_FILE" \
-        https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip 2>&1 | \
-        while IFS= read -r line; do
-            if [[ "$line" =~ ([0-9]+)% ]]; then
-                percent="${BASH_REMATCH[1]}"
-                completed=$((percent / 2))
-                remaining=$((50 - completed))
-                printf "\r${CYAN}["
-                printf "%${completed}s" | tr ' ' '█'
-                printf "%${remaining}s" | tr ' ' '░'
-                printf "] ${percent}%%${NC}"
-            fi
-        done
-
-        echo ""
-        
-        if [ -f "$ANDROID_TOOLS_FILE" ]; then
-            echo ""
-            echo -ne "${CYAN}Mengekstrak Android Command Line Tools...${NC}"
-            
-            sudo -u $TARGET_USER unzip -q "$ANDROID_TOOLS_FILE" -d "$ANDROID_SDK_DIR/cmdline-tools/"
-            sudo -u $TARGET_USER mv "$ANDROID_SDK_DIR/cmdline-tools/cmdline-tools" "$ANDROID_SDK_DIR/cmdline-tools/latest"
-            
-            echo -e "\r${HIJAU}Android Command Line Tools berhasil diekstrak${NC}                              "
-            
-            # Cleanup
-            echo -ne "${CYAN}Membersihkan file download Android SDK...${NC}"
-            rm -f "$ANDROID_TOOLS_FILE"
-            echo -e "\r${HIJAU}File download dihapus (~150MB freed)${NC}                              "
-            
-            # Setup Android SDK PATH
-            echo -ne "${CYAN}Menambahkan Android SDK ke PATH...${NC}"
-            if ! grep -q "ANDROID_HOME" /home/$TARGET_USER/.bashrc; then
-                cat >> /home/$TARGET_USER/.bashrc <<'ANDROID_ENV'
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-ANDROID_ENV
-            fi
-            echo -e "\r${HIJAU}Android SDK berhasil ditambahkan ke PATH${NC}                              "
-            
-            echo ""
-            echo -e "${HIJAU}Android Command Line Tools berhasil diinstall!${NC}"
-            echo ""
-            echo -e "${KUNING}Note: Jalankan command berikut setelah restart terminal:${NC}"
-            echo -e "${CYAN}   flutter doctor --android-licenses${NC}"
-            echo ""
-        else
-            echo -e "${MERAH}Download Android Command Line Tools gagal!${NC}"
-            rm -f "$ANDROID_TOOLS_FILE"
-        fi
-    else
-        echo -e "${KUNING}Skip Android SDK installation${NC}"
-        echo ""
-    fi
-    
-    # CLEANUP FINAL
-    echo -ne "${CYAN}Membersihkan semua file temporary...${NC}"
-    cd /tmp
-    rm -f flutter*.tar.xz commandlinetools*.zip 2>/dev/null
-    echo -e "\r${HIJAU}Cleanup selesai!${NC}                              "
-    
-    echo ""
-    echo -e "${HIJAU}[OK] Flutter Mobile Dev selesai diinstall!${NC}"
-    echo ""
-    echo -e "${KUNING}=== PENTING: Restart terminal atau jalankan: ===${NC}"
-    echo -e "${CYAN}source ~/.bashrc${NC}"
-    echo ""
-    echo -e "${KUNING}Kemudian jalankan untuk cek status:${NC}"
-    echo -e "${CYAN}flutter doctor -v${NC}"
     echo ""
 }
 
