@@ -150,69 +150,97 @@ extract_with_progress() {
     fi
 }
 
-# ===== Fungsi Install Packages dengan Progress Realtime =====
+# ===== Fungsi Install Packages =====
 install_packages_realtime() {
     local packages=("$@")
     local total=${#packages[@]}
-    local current=0
-    local FAILED_PACKAGES=""
     
-    echo -e "${CYAN}Menginstall ${total} paket...${NC}"
+    if [ $total -eq 0 ]; then
+        echo -e "${KUNING}Tidak ada paket untuk diinstall${NC}"
+        return 0
+    fi
+    
+    echo -e "${CYAN}Menginstall $total paket...${NC}"
     echo ""
     
+    # Filter paket yang belum terinstall
+    local to_install=()
+    local already_installed=()
+    
+    echo -ne "${CYAN}Memeriksa paket yang sudah terinstall...${NC}"
+    
     for pkg in "${packages[@]}"; do
-        current=$((current + 1))
-        
-        # Cek apakah sudah terinstall
-        if dpkg -l 2>/dev/null | grep -q "^ii.*$pkg "; then
-            echo -e "${HIJAU}[$current/$total] $pkg ${CYAN}(sudah terinstall)${NC}"
-            continue
-        fi
-        
-        echo -e "${CYAN}[$current/$total] Installing $pkg...${NC}"
-        
-        # Install dengan monitoring progress
-        local last_percent=0
-        apt-get install -y "$pkg" 2>&1 | \
-        while IFS= read -r line; do
-            # Parse progress dari apt
-            if [[ "$line" =~ Progress:.*\[([0-9]+)% ]]; then
-                percent="${BASH_REMATCH[1]}"
-                if [ "$percent" != "$last_percent" ]; then
-                    completed=$((percent / 2))
-                    remaining=$((50 - completed))
-                    printf "\r${CYAN}[$current/$total] $pkg ["
-                    printf "%${completed}s" | tr ' ' '█'
-                    printf "%${remaining}s" | tr ' ' '░'
-                    printf "] ${percent}%%${NC}"
-                    last_percent=$percent
-                fi
-            elif [[ "$line" =~ "Unpacking" ]] || [[ "$line" =~ "Setting up" ]]; then
-                echo -ne "\r${CYAN}[$current/$total] $pkg: $(echo $line | cut -d' ' -f1-3)...${NC}                    "
-            fi
-        done
-        
-        # Cek status instalasi
-        if dpkg -l 2>/dev/null | grep -q "^ii.*$pkg "; then
-            echo -e "\r${HIJAU}[$current/$total] $pkg berhasil diinstall${NC}                                          "
+        if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "^install ok installed"; then
+            already_installed+=("$pkg")
         else
-            echo -e "\r${MERAH}[$current/$total] $pkg gagal diinstall${NC}                                            "
-            FAILED_PACKAGES="$FAILED_PACKAGES $pkg"
+            to_install+=("$pkg")
         fi
     done
     
+    echo -e "\r${HIJAU}Pemeriksaan paket selesai!${NC}                              "
     echo ""
     
-    if [ -n "$FAILED_PACKAGES" ]; then
-        echo -e "${KUNING}Paket yang gagal diinstall:$FAILED_PACKAGES${NC}"
-        echo -e "${CYAN}Anda bisa mencoba install manual nanti.${NC}"
-        echo ""
-    else
-        echo -e "${HIJAU}Semua paket berhasil diinstall!${NC}"
+    # Tampilkan paket yang sudah terinstall
+    if [ ${#already_installed[@]} -gt 0 ]; then
+        echo -e "${HIJAU}Sudah terinstall (${#already_installed[@]} paket):${NC}"
+        for pkg in "${already_installed[@]}"; do
+            echo -e "${CYAN}  ✓ $pkg${NC}"
+        done
         echo ""
     fi
+    
+    # Install paket yang belum terinstall (BATCH dengan loading)
+    if [ ${#to_install[@]} -gt 0 ]; then
+        echo -e "${CYAN}Akan menginstall ${#to_install[@]} paket baru...${NC}"
+        echo -e "${KUNING}Paket: ${to_install[*]}${NC}"
+        echo ""
+        
+        # Install dengan show_loading animation
+        (
+            DEBIAN_FRONTEND=noninteractive apt-get install -y "${to_install[@]}" > /tmp/apt_install.log 2>&1
+        ) &
+        
+        show_loading $! "Menginstall ${#to_install[@]} paket"
+        
+        local install_status=$?
+        echo ""
+        
+        # Verifikasi instalasi
+        if [ $install_status -eq 0 ]; then
+            local failed=()
+            for pkg in "${to_install[@]}"; do
+                if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "^install ok installed"; then
+                    failed+=("$pkg")
+                fi
+            done
+            
+            if [ ${#failed[@]} -eq 0 ]; then
+                echo -e "${HIJAU}Semua paket berhasil diinstall!${NC}"
+                echo ""
+                return 0
+            else
+                echo -e "${KUNING}Beberapa paket gagal diinstall:${NC}"
+                for pkg in "${failed[@]}"; do
+                    echo -e "${MERAH} X $pkg${NC}"
+                done
+                echo ""
+                echo -e "${CYAN}Lihat detail di: /tmp/apt_install.log${NC}"
+                echo -e "${CYAN}Anda bisa coba install manual: sudo apt install ${failed[*]}${NC}"
+                echo ""
+                return 1
+            fi
+        else
+            echo -e "${MERAH}Instalasi gagal!${NC}"
+            echo -e "${CYAN}Lihat detail di: /tmp/apt_install.log${NC}"
+            echo ""
+            return 1
+        fi
+    else
+        echo -e "${HIJAU}Semua paket sudah terinstall!${NC}"
+        echo ""
+        return 0
+    fi
 }
-
 # ===== Error Handler =====
 set -o pipefail
 
@@ -1074,7 +1102,7 @@ for CHOICE in "${CHOICES[@]}"; do
             
             install_yarn_repo
             if [ $? -eq 0 ]; then
-                install_packages_realtime yarn  
+                install_packages_realtime yarn
             fi
             
             install_sass_tools
@@ -1092,7 +1120,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi Backend Development Tools${NC}"
             echo ""
             
-            install_packages_realtime php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2  
+            install_packages_realtime php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2
             
             echo ""
             echo -e "${CYAN}Menambahkan repository universe...${NC}"
@@ -1130,7 +1158,7 @@ for CHOICE in "${CHOICES[@]}"; do
                 echo ""
                 install_yarn_repo
                 if [ $? -eq 0 ]; then
-                    install_packages_realtime yarn  # ← GANTI INI
+                    install_packages_realtime yarn
                 fi
                 install_sass_tools
                 echo ""
@@ -1143,7 +1171,7 @@ for CHOICE in "${CHOICES[@]}"; do
             if [ "$BACKEND_INSTALLED" = false ]; then
                 echo -e "${CYAN}[2/2] Installing Backend Tools...${NC}"
                 echo ""
-                install_packages_realtime php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2  
+                install_packages_realtime php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2
                 
                 echo ""
                 echo -ne "${CYAN}Menambahkan repository universe...${NC}"
@@ -1185,7 +1213,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi Game Development Tools${NC}"
             echo ""
             
-            install_packages_realtime godot3 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev  
+            install_packages_realtime godot3 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
             
             echo -e "${HIJAU}Game Dev Tools Berhasil Diinstall!${NC}"
             echo ""
@@ -1200,7 +1228,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi Data Science & ML Tools${NC}"
             echo ""
             
-            install_packages_realtime python3-numpy python3-pandas python3-sklearn python3-matplotlib python3-seaborn jupyter-notebook python3-scipy 
+            install_packages_realtime python3-numpy python3-pandas python3-sklearn python3-matplotlib python3-seaborn jupyter-notebook python3-scipy
             
             echo ""
             echo -e "${KUNING}Install PyTorch (Opsional)${NC}"
@@ -1259,7 +1287,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi DevOps & Automation Tools${NC}"
             echo ""
             
-            install_packages_realtime ansible nginx apache2-utils  
+            install_packages_realtime ansible nginx apache2-utils
             
             echo ""
             echo -e "${KUNING}Info: Terraform & kubectl${NC}"
