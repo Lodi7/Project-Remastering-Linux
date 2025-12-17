@@ -68,6 +68,124 @@ show_progress() {
     fi
 }
 
+# ===== Fungsi Download dengan Progress Bar Realtime =====
+download_with_progress() {
+    local url=$1
+    local output=$2
+    local message=$3
+    
+    echo -e "${CYAN}${message}${NC}"
+    echo ""
+    
+    wget --progress=bar:force:noscroll -O "$output" "$url" 2>&1 | \
+    while IFS= read -r line; do
+        if [[ "$line" =~ ([0-9]+)% ]]; then
+            percent="${BASH_REMATCH[1]}"
+            completed=$((percent / 2))
+            remaining=$((50 - completed))
+            printf "\r${CYAN}["
+            printf "%${completed}s" | tr ' ' '█'
+            printf "%${remaining}s" | tr ' ' '░'
+            printf "] ${percent}%%${NC}"
+        fi
+    done
+    
+    local status=${PIPESTATUS[0]}
+    
+    if [ $status -eq 0 ] && [ -f "$output" ] && [ -s "$output" ]; then
+        echo ""
+        echo -e "${HIJAU}Download selesai!${NC}"
+        echo ""
+        return 0
+    else
+        echo ""
+        echo -e "${MERAH}Download gagal!${NC}"
+        echo ""
+        return 1
+    fi
+}
+
+# ===== Fungsi Extract dengan Progress Realtime (menggunakan pv) =====
+extract_with_progress() {
+    local file=$1
+    local dest=$2
+    local message=$3
+    
+    echo -e "${CYAN}${message}${NC}"
+    
+    # Install pv jika belum ada (silent)
+    if ! command -v pv &> /dev/null; then
+        apt-get install -y pv > /dev/null 2>&1
+    fi
+    
+    # Cek apakah pv tersedia
+    if command -v pv &> /dev/null; then
+        # Extract dengan progress bar realtime
+        local filesize=$(stat -c%s "$file")
+        
+        pv -p -t -e -r -b -s "$filesize" "$file" | tar xJf - -C "$dest" 2>&1
+        local status=${PIPESTATUS[0]}
+        
+        if [ $status -eq 0 ]; then
+            echo ""
+            echo -e "${HIJAU}Ekstrak selesai!${NC}"
+            return 0
+        else
+            echo ""
+            echo -e "${MERAH}Ekstrak gagal!${NC}"
+            return 1
+        fi
+    else
+        # Fallback jika pv tidak bisa diinstall
+        echo -ne "${CYAN}${message}...${NC}"
+        tar xf "$file" -C "$dest" > /dev/null 2>&1
+        
+        if [ $? -eq 0 ]; then
+            echo -e "\r${HIJAU}${message} selesai!${NC}                              "
+            return 0
+        else
+            echo -e "\r${MERAH}${message} gagal!${NC}                              "
+            return 1
+        fi
+    fi
+}
+
+# ===== Fungsi Install Packages dengan Progress Realtime =====
+install_packages() {
+    install_packages_realtime "$@"
+}
+
+# ===== Fungsi untuk Monitor Command dengan Output Realtime =====
+run_with_output() {
+    local message=$1
+    shift
+    local command="$@"
+    
+    echo -e "${CYAN}${message}${NC}"
+    
+    # Jalankan command dan tampilkan output penting
+    eval "$command" 2>&1 | while IFS= read -r line; do
+        # Filter output yang penting saja
+        if [[ "$line" =~ (Downloading|Installing|Unpacking|Setting|up|Configuring) ]]; then
+            echo -ne "\r${CYAN}${line:0:70}...${NC}                              "
+        fi
+    done
+    
+    local status=${PIPESTATUS[0]}
+    
+    if [ $status -eq 0 ]; then
+        echo ""
+        echo -e "${HIJAU}${message} selesai!${NC}"
+        echo ""
+        return 0
+    else
+        echo ""
+        echo -e "${MERAH}${message} gagal!${NC}"
+        echo ""
+        return 1
+    fi
+}
+
 # ===== Error Handler =====
 set -o pipefail
 
@@ -528,40 +646,44 @@ install_yarn_repo() {
         return 0
     fi
     
-    # Install curl
+    # Install curl jika belum ada
     if ! command -v curl &> /dev/null; then
-        echo -ne "${CYAN}Menginstall curl...${NC}"
-        apt-get install -y curl > /dev/null 2>&1 || {
-            echo -e "\r${MERAH}Gagal install curl${NC}                              "
+        if loading_exec "Menginstall curl" apt-get install -y curl; then
+            :
+        else
             return 1
-        }
-        echo -e "\r${HIJAU}curl berhasil diinstall${NC}                              "
+        fi
     fi
     
-    # Tambah GPG key
+    # Tambah GPG key dengan progress
     echo -ne "${CYAN}Menambahkan GPG key Yarn...${NC}"
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /usr/share/keyrings/yarn-archive-keyring.gpg > /dev/null 2>&1
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg 2>&1 | \
+        gpg --dearmor 2>&1 | \
+        tee /usr/share/keyrings/yarn-archive-keyring.gpg > /dev/null 2>&1
     
-    if [ $? -eq 0 ]; then
+    if [ ${PIPESTATUS[0]} -eq 0 ]; then
         echo -e "\r${HIJAU}GPG key Yarn berhasil ditambahkan${NC}                              "
         
         # Tambah repository
         echo -ne "${CYAN}Menambahkan repository Yarn...${NC}"
-        echo "deb [signed-by=/usr/share/keyrings/yarn-archive-keyring.gpg] https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list > /dev/null
+        echo "deb [signed-by=/usr/share/keyrings/yarn-archive-keyring.gpg] https://dl.yarnpkg.com/debian/ stable main" | \
+            tee /etc/apt/sources.list.d/yarn.list > /dev/null
         
-        # Update repo
-        apt-get update > /dev/null 2>&1 || {
-            echo -e "\r${MERAH}Gagal update repo Yarn${NC}                              "
+        # Update repo dengan progress
+        apt-get update > /dev/null 2>&1 &
+        show_loading $! "Update repository Yarn"
+        
+        if [ $? -eq 0 ]; then
+            echo ""
+        else
+            echo -e "${MERAH}Gagal update repo Yarn${NC}"
             return 1
-        }
-        echo -e "\r${HIJAU}Repository Yarn berhasil ditambahkan${NC}                              "
-        echo ""
+        fi
     else
         echo -e "\r${MERAH}Gagal menambahkan GPG key Yarn${NC}                              "
         return 1
     fi
 }
-
 # ===== Fungsi Install Sass dengan Fallback =====
 install_sass_tools() {
     echo -e "${CYAN}Menginstall Sass compilers...${NC}"
@@ -597,15 +719,14 @@ install_sass_tools() {
 install_flutter_mobile() {
     echo -e "${CYAN}Menginstall paket Mobile Development...${NC}"
     
-    # 1. Install dependencies
+    # 1. Install dependencies dengan progress realtime
     echo -e "${CYAN}Menginstall dependencies...${NC}"
-    install_packages curl git unzip xz-utils zip libglu1-mesa adb android-sdk-platform-tools-common
+    install_packages_realtime curl git unzip xz-utils zip libglu1-mesa adb android-sdk-platform-tools-common
     
     # 2. Download dan install Flutter manual
     echo -e "${CYAN}Menginstall Flutter...${NC}"
     
     FLUTTER_DIR="/opt/flutter"
-    FLUTTER_VERSION="stable"
     
     if [ -d "$FLUTTER_DIR" ]; then
         echo -e "${KUNING}Flutter sudah ada di $FLUTTER_DIR${NC}"
@@ -617,7 +738,7 @@ install_flutter_mobile() {
         else
             echo -e "${HIJAU}Menggunakan Flutter yang sudah ada${NC}"
             
-            # Setup PATH jika belum ada
+            # Setup PATH
             if ! command -v flutter &> /dev/null; then
                 echo 'export PATH="$PATH:/opt/flutter/bin"' >> /home/$TARGET_USER/.bashrc
                 export PATH="$PATH:/opt/flutter/bin"
@@ -643,51 +764,17 @@ install_flutter_mobile() {
     fi
     
     echo ""
-
-    # Download Flutter dengan progress bar
+    
     cd /tmp
     
-    echo -e "${CYAN}Mendownload Flutter SDK (~600MB)...${NC}"
-    echo -e "${KUNING}Ini mungkin memakan waktu beberapa menit...${NC}"
-    echo ""
-    
-    # Download dengan wget progress
-    wget --progress=bar:force:noscroll -O "$FLUTTER_FILE" "$FLUTTER_URL" 2>&1 | \
-    while IFS= read -r line; do
-        if [[ "$line" =~ ([0-9]+)% ]]; then
-            percent="${BASH_REMATCH[1]}"
-            # Progress bar manual
-            completed=$((percent / 2))
-            remaining=$((50 - completed))
-            printf "\r${CYAN}["
-            printf "%${completed}s" | tr ' ' '█'
-            printf "%${remaining}s" | tr ' ' '░'
-            printf "] ${percent}%%${NC}"
-        fi
-    done
-    
-    echo ""
-    
-    # Cek apakah download berhasil
-    if [ ! -f "$FLUTTER_FILE" ]; then
-        echo -e "${MERAH}Download Flutter SDK gagal!${NC}"
+    # Download Flutter dengan progress bar realtime
+    if ! download_with_progress "$FLUTTER_URL" "$FLUTTER_FILE" "Mendownload Flutter SDK (~600MB)"; then
+        rm -f "$FLUTTER_FILE"
         return 1
     fi
     
-    echo -e "${HIJAU}Download Flutter SDK selesai!${NC}"
-    echo ""
-    
-    # Extract Flutter
-    echo -ne "${CYAN}Mengekstrak Flutter SDK (tunggu sebentar)...${NC}"
-    
-    tar xf "$FLUTTER_FILE" -C /opt/ 2>&1 | while read line; do
-        echo -ne "."
-    done
-    
-    if [ $? -eq 0 ]; then
-        echo -e "\r${HIJAU}Flutter SDK berhasil diekstrak!${NC}                                          "
-    else
-        echo -e "\r${MERAH}Gagal ekstrak Flutter SDK${NC}                                          "
+    # Extract Flutter dengan progress realtime
+    if ! extract_with_progress "$FLUTTER_FILE" "/opt/" "Mengekstrak Flutter SDK"; then
         rm -f "$FLUTTER_FILE"
         return 1
     fi
@@ -703,6 +790,7 @@ install_flutter_mobile() {
     echo -e "\r${HIJAU}Permissions berhasil diatur${NC}                              "
     echo ""
     
+    # Tambahkan ke PATH
     echo -ne "${CYAN}Menambahkan Flutter ke PATH...${NC}"
     if ! grep -q "/opt/flutter/bin" /home/$TARGET_USER/.bashrc; then
         echo 'export PATH="$PATH:/opt/flutter/bin"' >> /home/$TARGET_USER/.bashrc
@@ -712,26 +800,109 @@ install_flutter_mobile() {
     
     echo ""
     
-    # Jalankan flutter precache
+    # Jalankan flutter precache dengan output realtime
     echo -e "${CYAN}Mendownload Flutter dependencies...${NC}"
     echo -e "${KUNING}Ini akan memakan waktu beberapa menit...${NC}"
     echo ""
     
-    # Jalankan dengan progress
     sudo -u $TARGET_USER /opt/flutter/bin/flutter precache --linux 2>&1 | \
     while IFS= read -r line; do
         if [[ "$line" =~ Downloading ]]; then
             file=$(echo "$line" | awk '{print $2}')
-            echo -ne "\r${CYAN}Downloading: $file...${NC}                                        "
-        elif [[ "$line" =~ "Flutter" ]]; then
-            echo -e "\r${HIJAU}Flutter precache selesai!${NC}                                          "
+            echo -ne "\r${CYAN}Downloading: ${file:0:50}...${NC}                                        "
+        elif [[ "$line" =~ "%" ]]; then
+            echo -ne "\r${CYAN}${line}${NC}                                        "
         fi
     done
     
     echo ""
     echo -e "${HIJAU}Flutter SDK berhasil diinstall!${NC}"
     echo ""
-
+    
+    # 3. Install Android SDK
+    echo -e "${KUNING}Apakah Anda ingin install Android SDK lengkap?${NC}"
+    echo -e "${CYAN}Diperlukan untuk build aplikasi Android (ukuran ~2GB)${NC}"
+    echo ""
+    read -p "$(echo -e ${KUNING})Install Android SDK? (y/n): $(echo -e ${NC})" INSTALL_ANDROID_SDK
+    
+    if [[ "$INSTALL_ANDROID_SDK" =~ ^[Yy]$ ]]; then
+        echo ""
+        
+        ANDROID_SDK_DIR="/home/$TARGET_USER/Android/Sdk"
+        ANDROID_TOOLS_FILE="commandlinetools-linux.zip"
+        
+        echo -ne "${CYAN}Membuat direktori Android SDK...${NC}"
+        sudo -u $TARGET_USER mkdir -p "$ANDROID_SDK_DIR/cmdline-tools"
+        echo -e "\r${HIJAU}Direktori Android SDK dibuat${NC}                              "
+        
+        cd /tmp
+        
+        # Download Android SDK dengan progress realtime
+        if ! download_with_progress \
+            "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" \
+            "$ANDROID_TOOLS_FILE" \
+            "Mendownload Android Command Line Tools (~150MB)"; then
+            rm -f "$ANDROID_TOOLS_FILE"
+            return 1
+        fi
+        
+        # Extract Android SDK
+        echo -ne "${CYAN}Mengekstrak Android Command Line Tools...${NC}"
+        
+        (
+            sudo -u $TARGET_USER unzip -q "$ANDROID_TOOLS_FILE" -d "$ANDROID_SDK_DIR/cmdline-tools/"
+            sudo -u $TARGET_USER mv "$ANDROID_SDK_DIR/cmdline-tools/cmdline-tools" "$ANDROID_SDK_DIR/cmdline-tools/latest"
+        ) &
+        show_loading $! "Mengekstrak Android Command Line Tools"
+        
+        echo ""
+        
+        # Cleanup
+        echo -ne "${CYAN}Membersihkan file download Android SDK...${NC}"
+        rm -f "$ANDROID_TOOLS_FILE"
+        echo -e "\r${HIJAU}File download dihapus (~150MB freed)${NC}                              "
+        
+        # Setup Android SDK PATH
+        echo -ne "${CYAN}Menambahkan Android SDK ke PATH...${NC}"
+        if ! grep -q "ANDROID_HOME" /home/$TARGET_USER/.bashrc; then
+            cat >> /home/$TARGET_USER/.bashrc <<'ANDROID_ENV'
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+ANDROID_ENV
+        fi
+        echo -e "\r${HIJAU}Android SDK berhasil ditambahkan ke PATH${NC}                              "
+        
+        echo ""
+        echo -e "${HIJAU}Android Command Line Tools berhasil diinstall!${NC}"
+        echo ""
+        echo -e "${KUNING}Note: Jalankan command berikut setelah restart terminal:${NC}"
+        echo -e "${CYAN}   flutter doctor --android-licenses${NC}"
+        echo ""
+    else
+        echo -e "${KUNING}Skip Android SDK installation${NC}"
+        echo ""
+    fi
+    
+    # CLEANUP FINAL
+    echo -ne "${CYAN}Membersihkan semua file temporary...${NC}"
+    cd /tmp
+    rm -f flutter*.tar.xz commandlinetools*.zip 2>/dev/null
+    echo -e "\r${HIJAU}Cleanup selesai!${NC}                              "
+    
+    echo ""
+    echo -e "${HIJAU}[OK] Flutter Mobile Dev selesai diinstall!${NC}"
+    echo ""
+    
+    # Source untuk user
+    echo -e "${CYAN}Applying environment changes...${NC}"
+    sudo -u $TARGET_USER bash -c "source /home/$TARGET_USER/.bashrc" 2>/dev/null
+    echo -e "${HIJAU} PATH updated for $TARGET_USER${NC}"
+    
+    echo ""
+    echo -e "${KUNING}Note: Restart terminal atau jalankan 'source ~/.bashrc' untuk apply PATH${NC}"
+    echo ""
+}
     # 3. Install Android SDK
     echo -e "${KUNING}Apakah Anda ingin install Android SDK lengkap?${NC}"
     echo -e "${CYAN}Diperlukan untuk build aplikasi Android (ukuran ~2GB)${NC}"
@@ -1006,7 +1177,7 @@ for CHOICE in "${CHOICES[@]}"; do
             
             install_yarn_repo
             if [ $? -eq 0 ]; then
-                install_packages yarn
+                install_packages_realtime yarn  
             fi
             
             install_sass_tools
@@ -1024,7 +1195,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi Backend Development Tools${NC}"
             echo ""
             
-            install_packages php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2
+            install_packages_realtime php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2  
             
             echo ""
             echo -e "${CYAN}Menambahkan repository universe...${NC}"
@@ -1032,7 +1203,7 @@ for CHOICE in "${CHOICES[@]}"; do
             
             echo -ne "${CYAN}Update repository...${NC}"
             apt-get update > /dev/null 2>&1
-            echo -e "\r${HIJAU}Repository berhasil diupdate${NC}                              "
+            echo -e "\r${HIJAU}Repository berhasih diupdate${NC}                              "
             
             echo ""
             echo -ne "${CYAN}Menginstall phpMyAdmin...${NC}"
@@ -1047,8 +1218,8 @@ for CHOICE in "${CHOICES[@]}"; do
             echo ""
         fi
         ;;
-
-        3)
+        
+      3)
         if [ "$FRONTEND_INSTALLED" = true ] && [ "$BACKEND_INSTALLED" = true ]; then
             echo -e "${KUNING}[SKIP] Fullstack sudah terinstall${NC}"
             echo ""
@@ -1062,7 +1233,7 @@ for CHOICE in "${CHOICES[@]}"; do
                 echo ""
                 install_yarn_repo
                 if [ $? -eq 0 ]; then
-                    install_packages yarn
+                    install_packages_realtime yarn  # ← GANTI INI
                 fi
                 install_sass_tools
                 echo ""
@@ -1075,7 +1246,7 @@ for CHOICE in "${CHOICES[@]}"; do
             if [ "$BACKEND_INSTALLED" = false ]; then
                 echo -e "${CYAN}[2/2] Installing Backend Tools...${NC}"
                 echo ""
-                install_packages php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2
+                install_packages_realtime php php-cli php-fpm php-mysql php-curl php-xml php-mbstring php-zip php-gd composer mariadb-server apache2  
                 
                 echo ""
                 echo -ne "${CYAN}Menambahkan repository universe...${NC}"
@@ -1100,7 +1271,6 @@ for CHOICE in "${CHOICES[@]}"; do
             echo ""
         fi
         ;;
-        
       4)
         if [ "$MOBILE_INSTALLED" = true ]; then
             echo -e "${KUNING}[SKIP] Mobile Dev sudah terinstall${NC}"
@@ -1110,7 +1280,7 @@ for CHOICE in "${CHOICES[@]}"; do
         fi
         ;;
 
-        5)
+      5)
         if [ "$GAME_INSTALLED" = true ]; then
             echo -e "${KUNING}[SKIP] Game Dev sudah terinstall${NC}"
             echo ""
@@ -1118,13 +1288,13 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi Game Development Tools${NC}"
             echo ""
             
-            install_packages godot3 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+            install_packages_realtime godot3 libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev  
             
             echo -e "${HIJAU}Game Dev Tools Berhasil Diinstall!${NC}"
             echo ""
         fi
         ;;
-        
+            
       6)
         if [ "$DATASCIENCE_INSTALLED" = true ]; then
             echo -e "${KUNING}[SKIP] Data Science sudah terinstall${NC}"
@@ -1133,7 +1303,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi Data Science & ML Tools${NC}"
             echo ""
             
-            install_packages python3-numpy python3-pandas python3-sklearn python3-matplotlib python3-seaborn jupyter-notebook python3-scipy
+            install_packages_realtime python3-numpy python3-pandas python3-sklearn python3-matplotlib python3-seaborn jupyter-notebook python3-scipy 
             
             echo ""
             echo -e "${KUNING}Install PyTorch (Opsional)${NC}"
@@ -1145,22 +1315,35 @@ for CHOICE in "${CHOICES[@]}"; do
             
             if [[ "$INSTALL_TORCH" =~ ^[Yy]$ ]]; then
                 echo ""
-                echo -e "${CYAN}Mendownload & install PyTorch (ini akan lama)...${NC}"
+                echo -e "${CYAN}Mendownload & install PyTorch (~2GB)...${NC}"
+                echo -e "${KUNING}Ini akan memakan waktu 5-15 menit tergantung koneksi internet${NC}"
                 echo ""
                 
+                # Install dengan monitoring output
                 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu 2>&1 | \
                 while IFS= read -r line; do
                     if [[ "$line" =~ Downloading ]]; then
-                        package=$(echo "$line" | awk '{print $2}')
-                        echo -ne "\r${CYAN}Downloading: $package...${NC}                                        "
+                        package=$(echo "$line" | awk '{print $2}' | cut -d'-' -f1)
+                        size=$(echo "$line" | grep -oP '\(\K[^)]+')
+                        echo -ne "\r${CYAN}Downloading: $package ($size)...${NC}                                        "
                     elif [[ "$line" =~ Installing ]]; then
-                        package=$(echo "$line" | awk '{print $2}')
+                        package=$(echo "$line" | awk '{print $2}' | cut -d'-' -f1)
                         echo -ne "\r${CYAN}Installing: $package...${NC}                                        "
+                    elif [[ "$line" =~ Successfully ]]; then
+                        echo -ne "\r${HIJAU}PyTorch berhasil diinstall!${NC}                                          "
                     fi
                 done
                 
-                echo -e "\r${HIJAU}PyTorch berhasil diinstall!${NC}                                          "
                 echo ""
+                echo ""
+                
+                if python3 -c "import torch" 2>/dev/null; then
+                    echo -e "${HIJAU}PyTorch berhasil diinstall dan siap digunakan!${NC}"
+                    echo ""
+                else
+                    echo -e "${MERAH}PyTorch gagal diinstall!${NC}"
+                    echo ""
+                fi
             else
                 echo -e "${KUNING}Skip PyTorch installation${NC}"
                 echo ""
@@ -1179,7 +1362,7 @@ for CHOICE in "${CHOICES[@]}"; do
             echo -e "${CYAN}Instalasi DevOps & Automation Tools${NC}"
             echo ""
             
-            install_packages ansible nginx apache2-utils
+            install_packages_realtime ansible nginx apache2-utils  
             
             echo ""
             echo -e "${KUNING}Info: Terraform & kubectl${NC}"
