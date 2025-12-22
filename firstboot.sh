@@ -251,6 +251,15 @@ error_exit() {
     exit 1
 }
 
+is_phpmyadmin_installed() {
+    dpkg-query -W -f='${Status}' phpmyadmin 2>/dev/null | grep -q "install ok installed"
+}
+
+is_db_active() {
+    systemctl is-active --quiet mariadb || systemctl is-active --quiet mysql
+}
+
+
 # ===== Banner ASCII LOS =====
 clear
 echo -e "${BIRU_CERAH}"
@@ -413,7 +422,7 @@ PHPMYADMIN_DB=""
 
 echo -ne "${CYAN}Memeriksa phpMyAdmin yang sudah ada...${NC}"
 
-if dpkg -l | grep -q phpmyadmin && systemctl is-active --quiet mariadb 2>/dev/null; then
+if is_phpmyadmin_installed && is_db_active; then
     PHPMYADMIN_EXISTS=true
     echo -e "\r${HIJAU}phpMyAdmin terdeteksi di sistem!${NC}                              "
     echo ""
@@ -787,7 +796,7 @@ install_flutter_mobile() {
     cd /tmp
     
     # Download Flutter dengan progress bar realtime (SUDAH BAGUS)
-    if ! download_with_progress "$FLUTTER_URL" "$FLUTTER_FILE" "Mendownload Flutter SDK (~600MB)"; then
+    if ! download_with_progress "$FLUTTER_URL" "$FLUTTER_FILE" "Mendownload Flutter SDK (~600MB)..."; then
         rm -f "$FLUTTER_FILE"
         return 1
     fi
