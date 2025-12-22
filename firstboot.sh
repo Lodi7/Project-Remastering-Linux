@@ -388,8 +388,8 @@ done
 echo ""
 echo -ne "${CYAN}Mengkonfigurasi Git...${NC}"
 
-git config --global user.name "$GIT_NAME" > /dev/null 2>&1 || error_exit "Gagal konfigurasi Git name"
-git config --global user.email "$GIT_EMAIL" > /dev/null 2>&1 || error_exit "Gagal konfigurasi Git email"
+sudo -u "$TARGET_USER" -H git config --global user.name "$GIT_NAME" > /dev/null 2>&1 || error_exit "Gagal konfigurasi Git name"
+sudo -u "$TARGET_USER" -H git config --global user.email "$GIT_EMAIL" > /dev/null 2>&1 || error_exit "Gagal konfigurasi Git email"
 
 echo -e "\r${HIJAU}Git berhasil dikonfigurasi!${NC}                    "
 echo -e "${CYAN}  ├─ Nama : $GIT_NAME${NC}"
